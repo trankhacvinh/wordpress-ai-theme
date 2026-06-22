@@ -23,6 +23,7 @@ final class PMEDIA_AI_Plugin
         PMEDIA_AI_Meta_Boxes::hooks();
         PMEDIA_AI_Renderer::hooks();
         PMEDIA_AI_Site_Generator::hooks();
+        PMEDIA_AI_Prompt_Workflow::hooks();
 
         add_action('admin_menu', [$this, 'register_admin_page']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
@@ -46,6 +47,7 @@ final class PMEDIA_AI_Plugin
         $allowed_hooks = [
             'toplevel_page_pmedia-ai-core',
             'pmedia-ai_page_pmedia-ai-site-generator',
+            'pmedia-ai_page_pmedia-ai-prompt-builder',
             'post.php',
             'post-new.php',
         ];
@@ -98,7 +100,7 @@ final class PMEDIA_AI_Plugin
         <div class="wrap pmedia-ai-admin-page">
             <h1>PMEDIA AI Core</h1>
             <p class="description">
-                Plugin này giữ dữ liệu động cho website: Section Builder, Site Generator, custom post type, SEO field và renderer helper.
+                Plugin này giữ dữ liệu động cho website: Section Builder, Prompt Builder không cần API key, Site Generator, custom post type, SEO field và renderer helper.
                 Theme chỉ cần lo giao diện.
             </p>
 
@@ -106,12 +108,15 @@ final class PMEDIA_AI_Plugin
                 <div class="pmedia-ai-card">
                     <h2>Quy trình dùng nhanh</h2>
                     <ol>
-                        <li>Vào <strong>PMEDIA AI > Site Generator</strong> để nhập brief và sitemap.</li>
-                        <li>Tạo hàng loạt Page theo sitemap.</li>
+                        <li>Không có API key: vào <strong>PMEDIA AI > Prompt Builder</strong>, copy prompt, dán kết quả JSON để import.</li>
+                        <li>Cần tạo nhanh theo rule: vào <strong>PMEDIA AI > Site Generator</strong>.</li>
                         <li>Vào từng Page để chỉnh section bằng form builder.</li>
                         <li>Theme <strong>PMEDIA AI Blank</strong> sẽ render theo dữ liệu section.</li>
                     </ol>
-                    <p><a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=pmedia-ai-site-generator')); ?>">Mở Site Generator</a></p>
+                    <p>
+                        <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=pmedia-ai-prompt-builder')); ?>">Mở Prompt Builder</a>
+                        <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=pmedia-ai-site-generator')); ?>">Mở Site Generator</a>
+                    </p>
                 </div>
 
                 <div class="pmedia-ai-card">
