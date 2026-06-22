@@ -5,7 +5,7 @@ Bộ khung WordPress nhẹ gồm theme trắng và plugin lõi để làm websit
 ## Thành phần
 
 - `theme/pmedia-ai-blank`: theme trắng, không phụ thuộc page builder, render section/component từ dữ liệu động.
-- `plugin/pmedia-ai-core`: plugin quản lý Section Builder, Nested Component Builder, Prompt Builder không cần API key, Site Generator theo sitemap, SEO field, custom post type và renderer helper.
+- `plugin/pmedia-ai-core`: plugin quản lý Section Builder, Tree Builder, Prompt Builder không cần API key, Site Generator theo sitemap, SEO field, custom post type và renderer helper.
 - `.github/workflows/build-zip.yml`: GitHub Actions tự lint PHP, build `.zip`, upload artifact và publish release asset khi tạo tag `v*`.
 
 ## Cách dùng nhanh
@@ -19,7 +19,7 @@ Bộ khung WordPress nhẹ gồm theme trắng và plugin lõi để làm websit
 7. Nhập brief + sitemap, bấm **Copy prompt**.
 8. Mang prompt sang ChatGPT/Claude/Gemini để sinh JSON.
 9. Dán JSON kết quả vào ô import để tạo/cập nhật Page.
-10. Vào từng Page để chỉnh nội dung bằng **PMEDIA AI Section Builder**.
+10. Vào từng Page để chỉnh nội dung bằng **PMEDIA AI Section Builder** hoặc **Tree Builder**.
 
 ## Prompt Builder không cần API key
 
@@ -53,7 +53,7 @@ Plugin import được dạng:
 
 ## Component nâng cao
 
-Hỗ trợ các component cơ bản:
+Component cơ bản:
 
 - `hero`
 - `content`
@@ -63,7 +63,7 @@ Hỗ trợ các component cơ bản:
 - `cta`
 - `contact`
 
-Hỗ trợ các component tương tác nâng cao:
+Component tương tác nâng cao:
 
 - `modal`
 - `gallery`
@@ -73,6 +73,34 @@ Hỗ trợ các component tương tác nâng cao:
 - `portfolio`
 
 Các component nâng cao được render bằng template PHP riêng trong theme và chạy bằng `interactive.js`. Không cần để AI sinh CSS/JS tùy ý.
+
+## Tree Builder UI
+
+Trong meta box **PMEDIA AI Section Builder** có nút **Tree Builder**.
+
+Tree Builder dùng để quản lý cấu trúc lồng nhau:
+
+- Xem toàn bộ section/component dưới dạng cây.
+- Chọn từng node để sửa JSON riêng của node đó.
+- Thêm root component.
+- Thêm child component vào node đang chọn.
+- Xóa node.
+- Nhân bản node.
+- Di chuyển node lên/xuống trong cùng cấp.
+- Đồng bộ ngược về JSON chính và Form Builder.
+
+Quy trình tạo modal chứa gallery bằng Tree Builder:
+
+```text
+1. Thêm root component: modal
+2. Chọn node modal trong cây
+3. Chọn type gallery ở dropdown Tree Builder
+4. Bấm Thêm child
+5. Chọn node gallery vừa tạo
+6. Sửa JSON node gallery hoặc chỉnh lại bằng Form Builder/JSON chính
+```
+
+Với portfolio item, Tree Builder sẽ tự tạo `item.modal.children` khi chọn item trong portfolio và bấm thêm child.
 
 ## Nested component
 
@@ -159,13 +187,14 @@ Trong từng Page/Post/Service/Project sẽ có meta box **PMEDIA AI Section Bui
 
 Có thể:
 
-- Thêm section/component.
+- Thêm section/component bằng form.
 - Xóa component.
 - Nhân bản component.
-- Kéo thả đổi thứ tự.
+- Kéo thả đổi thứ tự root section.
 - Thêm/xóa item trong repeater như services, pricing, FAQ, gallery, slider, portfolio.
 - Chọn ảnh từ WordPress Media Library.
 - Mở tab JSON để copy/paste nội dung từ AI.
+- Mở Tree Builder để chỉnh cấu trúc lồng nhau trực quan hơn.
 - Dùng field JSON nâng cao như `children_json`, `modal_json` khi cần nested phức tạp.
 
 ## Site Generator
