@@ -13,8 +13,12 @@ final class PMEDIA_AI_Renderer
         add_filter('document_title_parts', [self::class, 'filter_document_title']);
     }
 
-    public static function shortcode(array $atts = []): string
+    public static function shortcode($atts = []): string
     {
+        if (!is_array($atts)) {
+            $atts = [];
+        }
+
         $atts = shortcode_atts([
             'id' => get_the_ID(),
         ], $atts, 'pmedia_sections');
