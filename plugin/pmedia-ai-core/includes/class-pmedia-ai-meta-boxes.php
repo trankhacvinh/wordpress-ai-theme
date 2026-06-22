@@ -20,7 +20,7 @@ final class PMEDIA_AI_Meta_Boxes
         foreach ($screens as $screen) {
             add_meta_box(
                 'pmedia-ai-sections',
-                __('PMEDIA AI Sections', 'pmedia-ai-core'),
+                __('PMEDIA AI Section Builder', 'pmedia-ai-core'),
                 [self::class, 'render_sections_meta_box'],
                 $screen,
                 'normal',
@@ -44,18 +44,41 @@ final class PMEDIA_AI_Meta_Boxes
 
         $sections = get_post_meta($post->ID, '_pmedia_sections', true);
         if (empty($sections)) {
-            $sections = self::sample_sections_json();
+            $sections = PMEDIA_AI_Section_Schema::sample_sections_json();
         }
 
+        $schema = PMEDIA_AI_Section_Schema::schema();
         ?>
-        <p>
-            Nhập JSON section để theme render giao diện động. Mỗi object cần có field <code>type</code>, ví dụ:
-            <code>hero</code>, <code>services</code>, <code>pricing</code>, <code>faq</code>, <code>cta</code>, <code>contact</code>.
-        </p>
-        <textarea name="pmedia_sections" rows="24" class="large-text code pmedia-ai-json-field"><?php echo esc_textarea((string) $sections); ?></textarea>
-        <p class="description">
-            Gợi ý: dùng AI sinh JSON theo format này, sau đó khách chỉ sửa text/hình/nút trong admin mà không sửa code theme.
-        </p>
+        <div class="pmedia-ai-builder" data-builder="pmedia-ai-sections">
+            <p class="description">
+                Quản lý layout bằng section. Khách sửa nội dung bằng form, dev vẫn có thể mở tab JSON để chỉnh nhanh.
+            </p>
+
+            <textarea name="pmedia_sections" class="pmedia-ai-sections-json" hidden><?php echo esc_textarea((string) $sections); ?></textarea>
+
+            <div class="pmedia-ai-builder-toolbar">
+                <select class="pmedia-ai-section-type">
+                    <?php foreach ($schema as $type => $config) : ?>
+                        <option value="<?php echo esc_attr((string) $type); ?>"><?php echo esc_html((string) ($config['label'] ?? $type)); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="button" class="button button-primary pmedia-ai-add-section">Thêm section</button>
+                <button type="button" class="button pmedia-ai-expand-all">Mở tất cả</button>
+                <button type="button" class="button pmedia-ai-collapse-all">Thu gọn tất cả</button>
+                <button type="button" class="button pmedia-ai-toggle-json">Xem JSON</button>
+            </div>
+
+            <div class="pmedia-ai-builder-list" aria-live="polite"></div>
+
+            <div class="pmedia-ai-json-panel" hidden>
+                <p><strong>JSON section</strong></p>
+                <textarea rows="22" class="large-text code pmedia-ai-json-editor"><?php echo esc_textarea((string) $sections); ?></textarea>
+                <p>
+                    <button type="button" class="button pmedia-ai-apply-json">Áp dụng JSON vào builder</button>
+                    <span class="description">Dùng khi muốn copy JSON từ AI hoặc chỉnh nhanh bằng tay.</span>
+                </p>
+            </div>
+        </div>
         <?php
     }
 
@@ -113,100 +136,13 @@ final class PMEDIA_AI_Meta_Boxes
 
     public static function render_admin_notices(): void
     {
-        $notice = get_transient('pmedia_ai_admin_notice_' . get_current_user_id());
-        if (!$notice || !is_array($notice)) {
-            return;
-        }
-
-        delete_transient('pmedia_ai_admin_notice_' . get_current_user_id());
-
-        $type = $notice['type'] ?? 'info';
-        $message = $notice['message'] ?? '';
-
-        if ($message === '') {
-            return;
-        }
-
-        printf(
-            '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>',
-            esc_attr($type),
-            esc_html($message)
-        );
+        self::render_notice_transient('pmedia_ai_admin_notice_');
+        PMEDIA_AI_Site_Generator::maybe_render_notice();
     }
 
     public static function sample_sections_json(): string
     {
-        $sample = [
-            [
-                'type' => 'hero',
-                'eyebrow' => 'PMEDIA AI Website',
-                'title' => 'Website đẹp, nhẹ, dễ cập nhật nội dung',
-                'description' => 'WordPress giữ vai trò CMS và routing. Theme trắng render giao diện AI-generated. Khách sửa nội dung bằng form/JSON trong admin.',
-                'button_text' => 'Tư vấn ngay',
-                'button_link' => '/lien-he',
-                'secondary_button_text' => 'Xem dịch vụ',
-                'secondary_button_link' => '/dich-vu',
-                'image' => '',
-            ],
-            [
-                'type' => 'services',
-                'title' => 'Dịch vụ chính',
-                'description' => 'Các nhóm dịch vụ có thể cập nhật dễ dàng trong WordPress admin.',
-                'items' => [
-                    [
-                        'title' => 'Thiết kế website',
-                        'description' => 'Landing page, website công ty, website dịch vụ.',
-                    ],
-                    [
-                        'title' => 'Mini CMS',
-                        'description' => 'Quản trị nội dung gọn hơn WordPress truyền thống.',
-                    ],
-                    [
-                        'title' => 'Tối ưu SEO',
-                        'description' => 'Cấu trúc trang, thẻ meta và tốc độ tải trang.',
-                    ],
-                ],
-            ],
-            [
-                'type' => 'pricing',
-                'title' => 'Bảng giá tham khảo',
-                'items' => [
-                    [
-                        'name' => 'Starter',
-                        'price' => '5.000.000đ',
-                        'features' => ['1 landing page', 'Form liên hệ', 'Responsive'],
-                    ],
-                    [
-                        'name' => 'Business',
-                        'price' => '12.000.000đ',
-                        'features' => ['5-7 trang', 'Quản trị nội dung', 'SEO cơ bản'],
-                    ],
-                ],
-            ],
-            [
-                'type' => 'faq',
-                'title' => 'Câu hỏi thường gặp',
-                'items' => [
-                    [
-                        'question' => 'Có cần dùng WordPress builder không?',
-                        'answer' => 'Không bắt buộc. Theme render bằng section riêng để tránh khách làm vỡ layout.',
-                    ],
-                    [
-                        'question' => 'Có sửa nội dung được không?',
-                        'answer' => 'Có. Nội dung nằm trong WordPress admin, không cần sửa file HTML.',
-                    ],
-                ],
-            ],
-            [
-                'type' => 'cta',
-                'title' => 'Sẵn sàng triển khai website nhẹ hơn WordPress truyền thống?',
-                'description' => 'Dùng WordPress làm lõi CMS, còn giao diện và section do PMEDIA kiểm soát.',
-                'button_text' => 'Liên hệ PMEDIA',
-                'button_link' => '/lien-he',
-            ],
-        ];
-
-        return wp_json_encode($sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        return PMEDIA_AI_Section_Schema::sample_sections_json();
     }
 
     private static function normalize_json_string($value): string
@@ -233,6 +169,29 @@ final class PMEDIA_AI_Meta_Boxes
                 'type' => $type,
             ],
             60
+        );
+    }
+
+    private static function render_notice_transient(string $prefix): void
+    {
+        $notice = get_transient($prefix . get_current_user_id());
+        if (!$notice || !is_array($notice)) {
+            return;
+        }
+
+        delete_transient($prefix . get_current_user_id());
+
+        $type = $notice['type'] ?? 'info';
+        $message = $notice['message'] ?? '';
+
+        if ($message === '') {
+            return;
+        }
+
+        printf(
+            '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>',
+            esc_attr($type),
+            esc_html($message)
         );
     }
 }
