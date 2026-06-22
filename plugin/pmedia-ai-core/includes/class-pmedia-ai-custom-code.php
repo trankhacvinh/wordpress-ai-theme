@@ -14,6 +14,7 @@ final class PMEDIA_AI_Custom_Code
         add_action('admin_post_pmedia_ai_save_custom_code', [self::class, 'handle_save_global']);
         add_action('add_meta_boxes', [self::class, 'add_meta_boxes']);
         add_action('save_post', [self::class, 'save_post_meta']);
+        add_action('wp_enqueue_scripts', [self::class, 'enqueue_external_assets']);
         add_action('wp_head', [self::class, 'print_global_head'], 98);
         add_action('wp_head', [self::class, 'print_page_head'], 99);
         add_action('wp_footer', [self::class, 'print_global_footer'], 98);
@@ -25,6 +26,9 @@ final class PMEDIA_AI_Custom_Code
     {
         return [
             'enabled' => '1',
+            'external_css_urls' => '',
+            'external_js_head_urls' => '',
+            'external_js_footer_urls' => '',
             'global_css' => '',
             'global_js_head' => '',
             'global_js_footer' => '',
@@ -40,14 +44,7 @@ final class PMEDIA_AI_Custom_Code
 
     public static function register_submenu(): void
     {
-        add_submenu_page(
-            'pmedia-ai-core',
-            __('Custom Code', 'pmedia-ai-core'),
-            __('Custom Code', 'pmedia-ai-core'),
-            'manage_options',
-            'pmedia-ai-custom-code',
-            [self::class, 'render_admin_page']
-        );
+        add_submenu_page('pmedia-ai-core', __('Custom Code', 'pmedia-ai-core'), __('Custom Code', 'pmedia-ai-core'), 'manage_options', 'pmedia-ai-custom-code', [self::class, 'render_admin_page']);
     }
 
     public static function render_admin_page(): void
@@ -60,15 +57,32 @@ final class PMEDIA_AI_Custom_Code
         ?>
         <div class="wrap pmedia-ai-admin-page pmedia-ai-custom-code-page">
             <h1>PMEDIA AI Custom Code</h1>
-            <p class="description">Quản lý CSS/JS dùng chung toàn site. JS/HTML chỉ nên dùng bởi admin/dev vì có thể làm lỗi frontend nếu dán sai.</p>
+            <p class="description">Quản lý CSS/JS, external assets và mã nhúng dùng chung toàn site. Chỉ admin/dev nên dùng.</p>
 
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <input type="hidden" name="action" value="pmedia_ai_save_custom_code">
                 <?php wp_nonce_field('pmedia_ai_save_custom_code', 'pmedia_ai_custom_code_nonce'); ?>
 
                 <div class="pmedia-ai-card pmedia-ai-card-wide">
-                    <p><label><input type="checkbox" name="enabled" value="1" <?php checked(!empty($s['enabled'])); ?>> <strong>Bật Global Custom Code</strong></label></p>
-                    <p class="description">Tắt mục này nếu website bị lỗi sau khi thêm CSS/JS.</p>
+                    <p><label><input type="checkbox" name="enabled" value="1" <?php checked(!empty($s['enabled'])); ?>> <strong>Bật Global Custom Code / External Assets</strong></label></p>
+                    <p class="description">Tắt mục này nếu website bị lỗi sau khi thêm CSS/JS/plugin ngoài.</p>
+                </div>
+
+                <div class="pmedia-ai-admin-grid">
+                    <div class="pmedia-ai-card">
+                        <h2>External CSS URLs</h2>
+                        <p class="description">Mỗi dòng một URL CSS. Dùng cho thư viện ngoài như animation, icon, plugin frontend.</p>
+                        <textarea name="external_css_urls" rows="8" class="large-text code"><?php echo esc_textarea((string) $s['external_css_urls']); ?></textarea>
+                    </div>
+
+                    <div class="pmedia-ai-card">
+                        <h2>External JS URLs</h2>
+                        <p class="description">Mỗi dòng một URL JS. Head chỉ dùng khi bắt buộc; footer an toàn hơn.</p>
+                        <label><strong>JS Head URLs</strong></label>
+                        <textarea name="external_js_head_urls" rows="5" class="large-text code"><?php echo esc_textarea((string) $s['external_js_head_urls']); ?></textarea>
+                        <label><strong>JS Footer URLs</strong></label>
+                        <textarea name="external_js_footer_urls" rows="5" class="large-text code"><?php echo esc_textarea((string) $s['external_js_footer_urls']); ?></textarea>
+                    </div>
                 </div>
 
                 <div class="pmedia-ai-admin-grid">
@@ -110,13 +124,15 @@ final class PMEDIA_AI_Custom_Code
         if (!current_user_can('manage_options')) {
             wp_die(esc_html__('Bạn không có quyền thực hiện thao tác này.', 'pmedia-ai-core'));
         }
-
         if (!isset($_POST['pmedia_ai_custom_code_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['pmedia_ai_custom_code_nonce'])), 'pmedia_ai_save_custom_code')) {
             wp_die(esc_html__('Nonce không hợp lệ.', 'pmedia-ai-core'));
         }
 
         $settings = [
             'enabled' => !empty($_POST['enabled']) ? '1' : '',
+            'external_css_urls' => self::clean_url_lines(wp_unslash((string) ($_POST['external_css_urls'] ?? ''))),
+            'external_js_head_urls' => self::clean_url_lines(wp_unslash((string) ($_POST['external_js_head_urls'] ?? ''))),
+            'external_js_footer_urls' => self::clean_url_lines(wp_unslash((string) ($_POST['external_js_footer_urls'] ?? ''))),
             'global_css' => self::clean_css(wp_unslash((string) ($_POST['global_css'] ?? ''))),
             'global_js_head' => self::clean_js(wp_unslash((string) ($_POST['global_js_head'] ?? ''))),
             'global_js_footer' => self::clean_js(wp_unslash((string) ($_POST['global_js_footer'] ?? ''))),
@@ -128,12 +144,32 @@ final class PMEDIA_AI_Custom_Code
         exit;
     }
 
+    public static function enqueue_external_assets(): void
+    {
+        if (self::is_global_disabled_for_current_page()) {
+            return;
+        }
+        $s = self::settings();
+        if (empty($s['enabled'])) {
+            return;
+        }
+
+        foreach (self::parse_url_lines((string) $s['external_css_urls']) as $index => $url) {
+            wp_enqueue_style('pmedia-ai-ext-css-' . $index, esc_url($url), [], null);
+        }
+        foreach (self::parse_url_lines((string) $s['external_js_head_urls']) as $index => $url) {
+            wp_enqueue_script('pmedia-ai-ext-js-head-' . $index, esc_url($url), [], null, false);
+        }
+        foreach (self::parse_url_lines((string) $s['external_js_footer_urls']) as $index => $url) {
+            wp_enqueue_script('pmedia-ai-ext-js-footer-' . $index, esc_url($url), [], null, true);
+        }
+    }
+
     public static function add_meta_boxes(): void
     {
         if (!current_user_can('manage_options')) {
             return;
         }
-
         foreach (['page', 'post', 'pmedia_service', 'pmedia_project'] as $screen) {
             add_meta_box('pmedia-ai-page-custom-code', __('PMEDIA AI Page Custom Code', 'pmedia-ai-core'), [self::class, 'render_page_meta_box'], $screen, 'normal', 'default');
         }
@@ -166,7 +202,6 @@ final class PMEDIA_AI_Custom_Code
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
             return;
         }
-
         update_post_meta($post_id, '_pmedia_page_body_class', sanitize_text_field(wp_unslash((string) ($_POST['pmedia_page_body_class'] ?? ''))));
         update_post_meta($post_id, '_pmedia_disable_global_custom_code', !empty($_POST['pmedia_disable_global_custom_code']) ? '1' : '');
         update_post_meta($post_id, '_pmedia_page_css', self::clean_css(wp_unslash((string) ($_POST['pmedia_page_css'] ?? ''))));
@@ -178,7 +213,6 @@ final class PMEDIA_AI_Custom_Code
         if (!is_singular()) {
             return $classes;
         }
-
         $custom = get_post_meta(get_queried_object_id(), '_pmedia_page_body_class', true);
         foreach (preg_split('/\s+/', (string) $custom) ?: [] as $class) {
             $class = sanitize_html_class($class);
@@ -186,7 +220,6 @@ final class PMEDIA_AI_Custom_Code
                 $classes[] = $class;
             }
         }
-
         return $classes;
     }
 
@@ -249,6 +282,23 @@ final class PMEDIA_AI_Custom_Code
     private static function is_global_disabled_for_current_page(): bool
     {
         return is_singular() && (bool) get_post_meta(get_queried_object_id(), '_pmedia_disable_global_custom_code', true);
+    }
+
+    private static function parse_url_lines(string $value): array
+    {
+        $urls = [];
+        foreach (preg_split('/\r\n|\r|\n/', $value) ?: [] as $line) {
+            $url = esc_url_raw(trim($line));
+            if ($url !== '') {
+                $urls[] = $url;
+            }
+        }
+        return $urls;
+    }
+
+    private static function clean_url_lines(string $value): string
+    {
+        return implode("\n", self::parse_url_lines($value));
     }
 
     private static function clean_css(string $value): string
