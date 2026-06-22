@@ -5,7 +5,7 @@ Bộ khung WordPress nhẹ gồm theme trắng và plugin lõi để làm websit
 ## Thành phần
 
 - `theme/pmedia-ai-blank`: theme trắng, không phụ thuộc page builder, render section từ dữ liệu động.
-- `plugin/pmedia-ai-core`: plugin quản lý Section Builder, Site Generator theo sitemap, SEO field, custom post type và renderer helper.
+- `plugin/pmedia-ai-core`: plugin quản lý Section Builder, Prompt Builder không cần API key, Site Generator theo sitemap, SEO field, custom post type và renderer helper.
 - `.github/workflows/build-zip.yml`: GitHub Actions tự lint PHP, build `.zip`, upload artifact và publish release asset khi tạo tag `v*`.
 
 ## Cấu trúc
@@ -36,14 +36,62 @@ Bộ khung WordPress nhẹ gồm theme trắng và plugin lõi để làm websit
 3. Tải artifact `wordpress-ai-theme-packages`.
 4. Cài `pmedia-ai-core.zip` trong WordPress Admin > Plugins.
 5. Cài `pmedia-ai-blank.zip` trong WordPress Admin > Appearance > Themes.
-6. Vào **PMEDIA AI > Site Generator**.
-7. Nhập brief/prompt và sitemap.
-8. Bấm **Tạo / cập nhật website từ sitemap**.
-9. Vào từng Page để chỉnh nội dung bằng **PMEDIA AI Section Builder**.
+6. Không có API key: vào **PMEDIA AI > Prompt Builder**.
+7. Nhập brief + sitemap, bấm **Copy prompt**.
+8. Mang prompt sang ChatGPT/Claude/Gemini để sinh JSON.
+9. Dán JSON kết quả vào ô import để tạo/cập nhật Page.
+10. Vào từng Page để chỉnh nội dung bằng **PMEDIA AI Section Builder**.
+
+## Prompt Builder không cần API key
+
+Prompt Builder phù hợp khi chưa muốn tích hợp OpenAI API trực tiếp vào WordPress.
+
+Quy trình:
+
+```text
+PMEDIA AI > Prompt Builder
+→ nhập brief/sitemap
+→ copy prompt
+→ dán sang AI bên ngoài
+→ AI trả JSON
+→ dán JSON vào WordPress
+→ import thành nhiều Page
+```
+
+Output AI nên có dạng:
+
+```json
+{
+  "pages": [
+    {
+      "path": "/",
+      "title": "Trang chủ",
+      "seo_title": "",
+      "seo_description": "",
+      "sections": [
+        {
+          "type": "hero",
+          "title": "",
+          "description": ""
+        }
+      ]
+    }
+  ]
+}
+```
+
+Plugin sẽ:
+
+- Import JSON dạng `{ "pages": [...] }` hoặc array page trực tiếp.
+- Tạo/cập nhật Page theo `path`.
+- Tạo parent/child page theo đường dẫn lồng nhau.
+- Lưu `sections` vào `_pmedia_sections`.
+- Lưu SEO title/description nếu có.
+- Có thể đặt trang `/` làm homepage.
 
 ## Site Generator
 
-Site Generator cho phép tạo hàng loạt Page theo sitemap. Mỗi dòng là một trang:
+Site Generator cho phép tạo hàng loạt Page theo sitemap bằng rule nội bộ, không cần gọi AI bên ngoài. Mỗi dòng là một trang:
 
 ```text
 / | Trang chủ
@@ -88,7 +136,7 @@ Có thể:
 - `cta`
 - `contact`
 
-## JSON mẫu
+## JSON mẫu section
 
 ```json
 [
