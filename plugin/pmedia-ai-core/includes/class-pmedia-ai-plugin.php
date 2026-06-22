@@ -31,26 +31,12 @@ final class PMEDIA_AI_Plugin
 
     public function register_admin_page(): void
     {
-        add_menu_page(
-            __('PMEDIA AI', 'pmedia-ai-core'),
-            __('PMEDIA AI', 'pmedia-ai-core'),
-            'manage_options',
-            'pmedia-ai-core',
-            [$this, 'render_admin_page'],
-            'dashicons-layout',
-            30
-        );
+        add_menu_page(__('PMEDIA AI', 'pmedia-ai-core'), __('PMEDIA AI', 'pmedia-ai-core'), 'manage_options', 'pmedia-ai-core', [$this, 'render_admin_page'], 'dashicons-layout', 30);
     }
 
     public function enqueue_admin_assets(string $hook): void
     {
-        $allowed_hooks = [
-            'toplevel_page_pmedia-ai-core',
-            'pmedia-ai_page_pmedia-ai-site-generator',
-            'pmedia-ai_page_pmedia-ai-prompt-builder',
-            'post.php',
-            'post-new.php',
-        ];
+        $allowed_hooks = ['toplevel_page_pmedia-ai-core', 'pmedia-ai_page_pmedia-ai-site-generator', 'pmedia-ai_page_pmedia-ai-prompt-builder', 'post.php', 'post-new.php'];
 
         if (!in_array($hook, $allowed_hooks, true)) {
             return;
@@ -59,6 +45,10 @@ final class PMEDIA_AI_Plugin
         wp_enqueue_style('pmedia-ai-core-admin', PMEDIA_AI_CORE_URL . 'assets/admin.css', [], PMEDIA_AI_CORE_VERSION);
         wp_enqueue_media();
         wp_enqueue_script('pmedia-ai-core-admin', PMEDIA_AI_CORE_URL . 'assets/admin.js', ['jquery', 'jquery-ui-sortable'], PMEDIA_AI_CORE_VERSION, true);
+
+        if ($hook === 'pmedia-ai_page_pmedia-ai-prompt-builder') {
+            wp_enqueue_script('pmedia-ai-core-prompt-builder', PMEDIA_AI_CORE_URL . 'assets/prompt-builder.js', [], PMEDIA_AI_CORE_VERSION, true);
+        }
 
         wp_localize_script('pmedia-ai-core-admin', 'PMEDIA_AI_BUILDER', [
             'schema' => PMEDIA_AI_Component_Registry::schema(),
