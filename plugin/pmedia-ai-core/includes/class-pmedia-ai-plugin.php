@@ -22,6 +22,7 @@ final class PMEDIA_AI_Plugin
         PMEDIA_AI_CPT::hooks();
         PMEDIA_AI_Meta_Boxes::hooks();
         PMEDIA_AI_Renderer::hooks();
+        PMEDIA_AI_Site_Generator::hooks();
 
         add_action('admin_menu', [$this, 'register_admin_page']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
@@ -42,7 +43,14 @@ final class PMEDIA_AI_Plugin
 
     public function enqueue_admin_assets(string $hook): void
     {
-        if ($hook !== 'toplevel_page_pmedia-ai-core' && $hook !== 'post.php' && $hook !== 'post-new.php') {
+        $allowed_hooks = [
+            'toplevel_page_pmedia-ai-core',
+            'pmedia-ai_page_pmedia-ai-site-generator',
+            'post.php',
+            'post-new.php',
+        ];
+
+        if (!in_array($hook, $allowed_hooks, true)) {
             return;
         }
 
@@ -52,6 +60,31 @@ final class PMEDIA_AI_Plugin
             [],
             PMEDIA_AI_CORE_VERSION
         );
+
+        wp_enqueue_media();
+
+        wp_enqueue_script(
+            'pmedia-ai-core-admin',
+            PMEDIA_AI_CORE_URL . 'assets/admin.js',
+            ['jquery', 'jquery-ui-sortable'],
+            PMEDIA_AI_CORE_VERSION,
+            true
+        );
+
+        wp_localize_script('pmedia-ai-core-admin', 'PMEDIA_AI_BUILDER', [
+            'schema' => PMEDIA_AI_Section_Schema::schema(),
+            'defaults' => PMEDIA_AI_Section_Schema::defaults(),
+            'i18n' => [
+                'addSection' => 'Thêm section',
+                'deleteSection' => 'Xóa section',
+                'duplicateSection' => 'Nhân bản',
+                'collapse' => 'Thu gọn/Mở rộng',
+                'addItem' => 'Thêm mục',
+                'deleteItem' => 'Xóa mục',
+                'invalidJson' => 'JSON section không hợp lệ.',
+                'confirmDelete' => 'Xóa section này?',
+            ],
+        ]);
     }
 
     public function render_admin_page(): void
@@ -60,12 +93,12 @@ final class PMEDIA_AI_Plugin
             return;
         }
 
-        $sample = PMEDIA_AI_Meta_Boxes::sample_sections_json();
+        $sample = PMEDIA_AI_Section_Schema::sample_sections_json();
         ?>
         <div class="wrap pmedia-ai-admin-page">
             <h1>PMEDIA AI Core</h1>
             <p class="description">
-                Plugin này giữ phần dữ liệu động cho website: section JSON, custom post type, SEO field và renderer helper.
+                Plugin này giữ dữ liệu động cho website: Section Builder, Site Generator, custom post type, SEO field và renderer helper.
                 Theme chỉ cần lo giao diện.
             </p>
 
@@ -73,11 +106,12 @@ final class PMEDIA_AI_Plugin
                 <div class="pmedia-ai-card">
                     <h2>Quy trình dùng nhanh</h2>
                     <ol>
-                        <li>Tạo hoặc sửa một Page trong WordPress.</li>
-                        <li>Tại box <strong>PMEDIA AI Sections</strong>, dán JSON section.</li>
-                        <li>Publish page.</li>
-                        <li>Theme <strong>PMEDIA AI Blank</strong> sẽ render theo dữ liệu này.</li>
+                        <li>Vào <strong>PMEDIA AI > Site Generator</strong> để nhập brief và sitemap.</li>
+                        <li>Tạo hàng loạt Page theo sitemap.</li>
+                        <li>Vào từng Page để chỉnh section bằng form builder.</li>
+                        <li>Theme <strong>PMEDIA AI Blank</strong> sẽ render theo dữ liệu section.</li>
                     </ol>
+                    <p><a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=pmedia-ai-site-generator')); ?>">Mở Site Generator</a></p>
                 </div>
 
                 <div class="pmedia-ai-card">
