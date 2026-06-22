@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('PMEDIA_AI_BLANK_VERSION', '1.0.0');
+define('PMEDIA_AI_BLANK_VERSION', '1.1.0');
 define('PMEDIA_AI_BLANK_DIR', get_template_directory());
 define('PMEDIA_AI_BLANK_URI', get_template_directory_uri());
 
@@ -33,7 +33,9 @@ add_action('wp_enqueue_scripts', 'pmedia_ai_blank_enqueue_assets');
 function pmedia_ai_blank_enqueue_assets(): void
 {
     wp_enqueue_style('pmedia-ai-blank-main', PMEDIA_AI_BLANK_URI . '/assets/css/main.css', [], PMEDIA_AI_BLANK_VERSION);
+    wp_enqueue_style('pmedia-ai-blank-interactive', PMEDIA_AI_BLANK_URI . '/assets/css/interactive.css', ['pmedia-ai-blank-main'], PMEDIA_AI_BLANK_VERSION);
     wp_enqueue_script('pmedia-ai-blank-main', PMEDIA_AI_BLANK_URI . '/assets/js/main.js', [], PMEDIA_AI_BLANK_VERSION, true);
+    wp_enqueue_script('pmedia-ai-blank-interactive', PMEDIA_AI_BLANK_URI . '/assets/js/interactive.js', ['pmedia-ai-blank-main'], PMEDIA_AI_BLANK_VERSION, true);
 }
 
 add_filter('body_class', 'pmedia_ai_blank_body_classes');
