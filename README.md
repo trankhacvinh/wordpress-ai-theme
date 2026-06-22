@@ -5,7 +5,7 @@ Bộ khung WordPress nhẹ gồm theme trắng và plugin lõi để làm websit
 ## Thành phần
 
 - `theme/pmedia-ai-blank`: theme trắng, không phụ thuộc page builder, render section/component từ dữ liệu động.
-- `plugin/pmedia-ai-core`: plugin quản lý Section Builder, Tree Builder, Prompt Builder không cần API key, Site Generator theo sitemap, SEO field, custom post type và renderer helper.
+- `plugin/pmedia-ai-core`: plugin quản lý Global Settings, Custom Code, Section Builder, Tree Builder, Prompt Builder không cần API key, Site Generator theo sitemap, SEO field, custom post type và renderer helper.
 - `.github/workflows/build-zip.yml`: GitHub Actions tự lint PHP, build `.zip`, upload artifact và publish release asset khi tạo tag `v*`.
 
 ## Cách dùng nhanh
@@ -15,15 +15,73 @@ Bộ khung WordPress nhẹ gồm theme trắng và plugin lõi để làm websit
 3. Tải artifact `wordpress-ai-theme-packages`.
 4. Cài `pmedia-ai-core.zip` trong WordPress Admin > Plugins.
 5. Cài `pmedia-ai-blank.zip` trong WordPress Admin > Appearance > Themes.
-6. Không có API key: vào **PMEDIA AI > Prompt Builder**.
-7. Nhập brief + sitemap, bấm **Copy prompt**.
-8. Mang prompt sang ChatGPT/Claude/Gemini để sinh JSON.
+6. Vào **PMEDIA AI > Global Settings** để chỉnh header/menu/footer/mobile.
+7. Vào **PMEDIA AI > Custom Code** nếu cần CSS/JS dùng chung toàn site.
+8. Không có API key: vào **PMEDIA AI > Prompt Builder**.
 9. Dán JSON kết quả vào ô import để tạo/cập nhật Page.
-10. Vào từng Page để chỉnh nội dung bằng **PMEDIA AI Section Builder** hoặc **Tree Builder**.
+10. Vào từng Page để chỉnh nội dung bằng **Section Builder**, **Tree Builder** hoặc **Page Custom Code**.
+
+## Custom Code
+
+Có 3 cấp custom code:
+
+### 1. Global Custom Code
+
+Vào:
+
+```text
+PMEDIA AI > Custom Code
+```
+
+Có thể thêm:
+
+- Global CSS
+- Global JS Head
+- Global JS Footer
+- Before Body HTML
+- Công tắc bật/tắt Global Custom Code
+
+### 2. Page Custom Code
+
+Trong từng Page/Post/Service/Project có meta box:
+
+```text
+PMEDIA AI Page Custom Code
+```
+
+Có thể thêm:
+
+- Body class riêng
+- Tắt Global Custom Code trên trang đó
+- Page CSS
+- Page JS Footer
+
+### 3. Section targeting
+
+Mỗi component có thêm các field:
+
+- `custom_id`
+- `custom_class`
+- `style_vars`
+- `data_attrs`
+
+Ví dụ:
+
+```json
+{
+  "type": "hero",
+  "custom_id": "home-hero",
+  "custom_class": "hero-premium hero-dark",
+  "style_vars": {
+    "--hero-height": "92vh"
+  },
+  "data_attrs": {
+    "tracking": "hero"
+  }
+}
+```
 
 ## Prompt Builder không cần API key
-
-Prompt Builder phù hợp khi chưa muốn tích hợp OpenAI API trực tiếp vào WordPress.
 
 ```text
 PMEDIA AI > Prompt Builder
@@ -81,121 +139,13 @@ Trong meta box **PMEDIA AI Section Builder** có nút **Tree Builder**.
 Tree Builder dùng để quản lý cấu trúc lồng nhau:
 
 - Xem toàn bộ section/component dưới dạng cây.
-- Chọn từng node để sửa JSON riêng của node đó.
+- Chọn từng node để sửa JSON riêng hoặc form editor.
 - Thêm root component.
 - Thêm child component vào node đang chọn.
 - Xóa node.
 - Nhân bản node.
-- Di chuyển node lên/xuống trong cùng cấp.
+- Di chuyển/kéo thả node.
 - Đồng bộ ngược về JSON chính và Form Builder.
-
-Quy trình tạo modal chứa gallery bằng Tree Builder:
-
-```text
-1. Thêm root component: modal
-2. Chọn node modal trong cây
-3. Chọn type gallery ở dropdown Tree Builder
-4. Bấm Thêm child
-5. Chọn node gallery vừa tạo
-6. Sửa JSON node gallery hoặc chỉnh lại bằng Form Builder/JSON chính
-```
-
-Với portfolio item, Tree Builder sẽ tự tạo `item.modal.children` khi chọn item trong portfolio và bấm thêm child.
-
-## Nested component
-
-Có thể lồng component bằng `children`.
-
-Ví dụ modal chứa gallery:
-
-```json
-{
-  "type": "modal",
-  "id": "project-gallery-modal",
-  "button_text": "Xem thư viện ảnh",
-  "modal_title": "Hình ảnh dự án",
-  "modal_size": "large",
-  "children": [
-    {
-      "type": "gallery",
-      "variant": "grid",
-      "lightbox": true,
-      "title": "Thư viện ảnh",
-      "items": [
-        {
-          "image": "/wp-content/uploads/anh-1.jpg",
-          "title": "Ảnh 1",
-          "description": "Mô tả ảnh 1"
-        }
-      ]
-    }
-  ]
-}
-```
-
-Ví dụ portfolio item mở modal chi tiết, trong modal có slider + content:
-
-```json
-{
-  "type": "portfolio",
-  "variant": "filterable_grid",
-  "title": "Dự án đã triển khai",
-  "filters": ["Tất cả", "Website", "Mini App", "Phần mềm"],
-  "items": [
-    {
-      "title": "Website phòng khám",
-      "category": "Website",
-      "image": "/wp-content/uploads/clinic-cover.jpg",
-      "description": "Website giới thiệu dịch vụ phòng khám.",
-      "modal": {
-        "title": "Chi tiết website phòng khám",
-        "children": [
-          {
-            "type": "slider",
-            "variant": "cards",
-            "items": [
-              {
-                "image": "/wp-content/uploads/clinic-1.jpg",
-                "title": "Trang chủ",
-                "description": "Giao diện trang chủ"
-              }
-            ]
-          },
-          {
-            "type": "content",
-            "title": "Mô tả dự án",
-            "content": "<p>Dự án tối ưu mobile, SEO và quản trị nội dung.</p>"
-          }
-        ]
-      }
-    }
-  ]
-}
-```
-
-## Quy tắc nested nên dùng
-
-- `modal.children`: có thể chứa `gallery`, `slider`, `content`, `cta`, `tabs`, `accordion`.
-- `tabs.items[].children`: có thể chứa `content`, `gallery`, `pricing`, `services`, `cta`.
-- `accordion.items[].children`: có thể chứa `content`, `gallery`, `contact`, `cta`.
-- `portfolio.items[].modal`: modal chi tiết riêng cho từng item.
-- Không để AI tự viết JavaScript hoặc CSS trong JSON.
-
-## Section Builder
-
-Trong từng Page/Post/Service/Project sẽ có meta box **PMEDIA AI Section Builder**.
-
-Có thể:
-
-- Thêm section/component bằng form.
-- Xóa component.
-- Nhân bản component.
-- Kéo thả đổi thứ tự root section.
-- Thêm/xóa item trong repeater như services, pricing, FAQ, gallery, slider, portfolio.
-- Chọn ảnh từ WordPress Media Library.
-- Mở tab JSON để copy/paste nội dung từ AI.
-- Mở Tree Builder để chỉnh cấu trúc lồng nhau trực quan hơn.
-- Dùng field JSON nâng cao như `children_json`, `modal_json` khi cần nested phức tạp.
 
 ## Site Generator
 
@@ -210,15 +160,6 @@ Site Generator cho phép tạo hàng loạt Page theo sitemap bằng rule nội 
 /cau-hoi-thuong-gap | Câu hỏi thường gặp
 /lien-he | Liên hệ
 ```
-
-Hệ thống sẽ:
-
-- Tạo Page theo slug/path.
-- Tạo parent/child page theo đường dẫn lồng nhau.
-- Sinh section JSON phù hợp theo loại trang.
-- Lưu prompt nguồn vào meta.
-- Có thể đặt trang `/` làm homepage.
-- Có bảng quản lý các trang đã tạo bằng PMEDIA AI.
 
 ## Nguyên tắc thiết kế
 

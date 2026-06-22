@@ -8,7 +8,7 @@ final class PMEDIA_AI_Component_Registry
 {
     public static function schema(): array
     {
-        return array_merge(PMEDIA_AI_Section_Schema::schema(), self::advanced_schema());
+        return self::with_common_fields(array_merge(PMEDIA_AI_Section_Schema::schema(), self::advanced_schema()));
     }
 
     public static function defaults(): array
@@ -18,7 +18,46 @@ final class PMEDIA_AI_Component_Registry
             $defaults[$type] = self::default_component($type);
         }
 
+        foreach ($defaults as $type => $default) {
+            if (is_array($default)) {
+                $defaults[$type] = array_merge(self::common_defaults(), $default);
+            }
+        }
+
         return $defaults;
+    }
+
+    private static function common_fields(): array
+    {
+        return [
+            'custom_id' => ['label' => 'Custom ID', 'type' => 'text'],
+            'custom_class' => ['label' => 'Custom class', 'type' => 'text'],
+            'style_vars' => ['label' => 'CSS variables JSON, ví dụ {"--hero-height":"90vh"}', 'type' => 'json'],
+            'data_attrs' => ['label' => 'Data attributes JSON, ví dụ {"tracking":"hero"}', 'type' => 'json'],
+        ];
+    }
+
+    private static function common_defaults(): array
+    {
+        return [
+            'custom_id' => '',
+            'custom_class' => '',
+            'style_vars' => [],
+            'data_attrs' => [],
+        ];
+    }
+
+    private static function with_common_fields(array $schema): array
+    {
+        foreach ($schema as $type => $config) {
+            if (!isset($config['fields']) || !is_array($config['fields'])) {
+                $config['fields'] = [];
+            }
+            $config['fields'] = self::common_fields() + $config['fields'];
+            $schema[$type] = $config;
+        }
+
+        return $schema;
     }
 
     public static function advanced_schema(): array
@@ -36,7 +75,7 @@ final class PMEDIA_AI_Component_Registry
             'modal' => [
                 'label' => 'Modal',
                 'fields' => [
-                    'id' => ['label' => 'ID', 'type' => 'text'],
+                    'id' => ['label' => 'ID cũ / fallback', 'type' => 'text'],
                     'button_text' => ['label' => 'Nút mở modal', 'type' => 'text'],
                     'modal_title' => ['label' => 'Tiêu đề modal', 'type' => 'text'],
                     'modal_description' => ['label' => 'Mô tả modal', 'type' => 'textarea'],
@@ -150,7 +189,7 @@ final class PMEDIA_AI_Component_Registry
     {
         switch ($type) {
             case 'modal':
-                return [
+                return array_merge(self::common_defaults(), [
                     'type' => 'modal',
                     'id' => 'modal-demo',
                     'button_text' => 'Xem chi tiết',
@@ -159,9 +198,9 @@ final class PMEDIA_AI_Component_Registry
                     'modal_size' => 'large',
                     'content' => '<p>Nhập nội dung modal tại đây.</p>',
                     'children' => [self::default_component('gallery')],
-                ];
+                ]);
             case 'gallery':
-                return [
+                return array_merge(self::common_defaults(), [
                     'type' => 'gallery',
                     'title' => 'Thư viện ảnh',
                     'description' => 'Một số hình ảnh nổi bật.',
@@ -171,9 +210,9 @@ final class PMEDIA_AI_Component_Registry
                         ['image' => '', 'title' => 'Ảnh 1', 'description' => 'Mô tả ảnh 1', 'link' => ''],
                         ['image' => '', 'title' => 'Ảnh 2', 'description' => 'Mô tả ảnh 2', 'link' => ''],
                     ],
-                ];
+                ]);
             case 'slider':
-                return [
+                return array_merge(self::common_defaults(), [
                     'type' => 'slider',
                     'title' => 'Slider nổi bật',
                     'description' => '',
@@ -186,9 +225,9 @@ final class PMEDIA_AI_Component_Registry
                         ['image' => '', 'title' => 'Slide 1', 'description' => 'Mô tả slide 1', 'button_text' => '', 'button_link' => ''],
                         ['image' => '', 'title' => 'Slide 2', 'description' => 'Mô tả slide 2', 'button_text' => '', 'button_link' => ''],
                     ],
-                ];
+                ]);
             case 'tabs':
-                return [
+                return array_merge(self::common_defaults(), [
                     'type' => 'tabs',
                     'title' => 'Nội dung theo tab',
                     'description' => '',
@@ -196,9 +235,9 @@ final class PMEDIA_AI_Component_Registry
                         ['label' => 'Tab 1', 'content' => '<p>Nội dung tab 1.</p>', 'children' => []],
                         ['label' => 'Tab 2', 'content' => '<p>Nội dung tab 2.</p>', 'children' => []],
                     ],
-                ];
+                ]);
             case 'accordion':
-                return [
+                return array_merge(self::common_defaults(), [
                     'type' => 'accordion',
                     'title' => 'Nội dung mở rộng',
                     'description' => '',
@@ -206,9 +245,9 @@ final class PMEDIA_AI_Component_Registry
                         ['title' => 'Mục 1', 'content' => '<p>Nội dung mục 1.</p>', 'children' => []],
                         ['title' => 'Mục 2', 'content' => '<p>Nội dung mục 2.</p>', 'children' => []],
                     ],
-                ];
+                ]);
             case 'portfolio':
-                return [
+                return array_merge(self::common_defaults(), [
                     'type' => 'portfolio',
                     'title' => 'Dự án đã triển khai',
                     'description' => '',
@@ -217,9 +256,9 @@ final class PMEDIA_AI_Component_Registry
                     'items' => [
                         ['image' => '', 'title' => 'Dự án mẫu', 'category' => 'Website', 'description' => 'Mô tả dự án.', 'link' => '', 'modal' => self::default_component('modal')],
                     ],
-                ];
+                ]);
             default:
-                return ['type' => $type];
+                return array_merge(self::common_defaults(), ['type' => $type]);
         }
     }
 }
