@@ -52,6 +52,10 @@ final class PMEDIA_AI_Plugin
             wp_enqueue_script('pmedia-ai-core-prompt-builder', PMEDIA_AI_CORE_URL . 'assets/prompt-builder.js', [], PMEDIA_AI_CORE_VERSION, true);
         }
 
+        if ($hook === 'pmedia-ai_page_pmedia-ai-global-settings') {
+            wp_enqueue_script('pmedia-ai-core-global-settings', PMEDIA_AI_CORE_URL . 'assets/global-settings.js', [], PMEDIA_AI_CORE_VERSION, true);
+        }
+
         wp_localize_script('pmedia-ai-core-admin', 'PMEDIA_AI_BUILDER', [
             'schema' => PMEDIA_AI_Component_Registry::schema(),
             'defaults' => PMEDIA_AI_Component_Registry::defaults(),
