@@ -18,23 +18,8 @@ final class PMEDIA_AI_Meta_Boxes
         $screens = ['page', 'post', 'pmedia_service', 'pmedia_project'];
 
         foreach ($screens as $screen) {
-            add_meta_box(
-                'pmedia-ai-sections',
-                __('PMEDIA AI Section Builder', 'pmedia-ai-core'),
-                [self::class, 'render_sections_meta_box'],
-                $screen,
-                'normal',
-                'high'
-            );
-
-            add_meta_box(
-                'pmedia-ai-seo',
-                __('PMEDIA AI SEO', 'pmedia-ai-core'),
-                [self::class, 'render_seo_meta_box'],
-                $screen,
-                'side',
-                'default'
-            );
+            add_meta_box('pmedia-ai-sections', __('PMEDIA AI Section Builder', 'pmedia-ai-core'), [self::class, 'render_sections_meta_box'], $screen, 'normal', 'high');
+            add_meta_box('pmedia-ai-seo', __('PMEDIA AI SEO', 'pmedia-ai-core'), [self::class, 'render_seo_meta_box'], $screen, 'side', 'default');
         }
     }
 
@@ -47,11 +32,11 @@ final class PMEDIA_AI_Meta_Boxes
             $sections = PMEDIA_AI_Section_Schema::sample_sections_json();
         }
 
-        $schema = PMEDIA_AI_Section_Schema::schema();
+        $schema = PMEDIA_AI_Component_Registry::schema();
         ?>
         <div class="pmedia-ai-builder" data-builder="pmedia-ai-sections">
             <p class="description">
-                Quản lý layout bằng section. Khách sửa nội dung bằng form, dev vẫn có thể mở tab JSON để chỉnh nhanh.
+                Quản lý layout bằng section/component. Hỗ trợ component nâng cao như modal, gallery, slider, tabs, accordion, portfolio. Với cấu trúc lồng nhau, dùng tab JSON hoặc các field JSON nâng cao.
             </p>
 
             <textarea name="pmedia_sections" class="pmedia-ai-sections-json" hidden><?php echo esc_textarea((string) $sections); ?></textarea>
@@ -75,7 +60,7 @@ final class PMEDIA_AI_Meta_Boxes
                 <textarea rows="22" class="large-text code pmedia-ai-json-editor"><?php echo esc_textarea((string) $sections); ?></textarea>
                 <p>
                     <button type="button" class="button pmedia-ai-apply-json">Áp dụng JSON vào builder</button>
-                    <span class="description">Dùng khi muốn copy JSON từ AI hoặc chỉnh nhanh bằng tay.</span>
+                    <span class="description">Dùng khi muốn copy JSON từ AI hoặc chỉnh nhanh bằng tay. Có thể dùng <code>children</code>, <code>settings</code>, <code>modal</code>.</span>
                 </p>
             </div>
         </div>
@@ -150,7 +135,6 @@ final class PMEDIA_AI_Meta_Boxes
         if (!is_string($value)) {
             return '';
         }
-
         return trim(wp_check_invalid_utf8($value));
     }
 
@@ -162,14 +146,7 @@ final class PMEDIA_AI_Meta_Boxes
 
     private static function set_admin_notice(string $message, string $type = 'info'): void
     {
-        set_transient(
-            'pmedia_ai_admin_notice_' . get_current_user_id(),
-            [
-                'message' => $message,
-                'type' => $type,
-            ],
-            60
-        );
+        set_transient('pmedia_ai_admin_notice_' . get_current_user_id(), ['message' => $message, 'type' => $type], 60);
     }
 
     private static function render_notice_transient(string $prefix): void
@@ -180,18 +157,12 @@ final class PMEDIA_AI_Meta_Boxes
         }
 
         delete_transient($prefix . get_current_user_id());
-
         $type = $notice['type'] ?? 'info';
         $message = $notice['message'] ?? '';
-
         if ($message === '') {
             return;
         }
 
-        printf(
-            '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>',
-            esc_attr($type),
-            esc_html($message)
-        );
+        printf('<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr($type), esc_html($message));
     }
 }
