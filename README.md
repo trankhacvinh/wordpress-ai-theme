@@ -4,30 +4,9 @@ Bộ khung WordPress nhẹ gồm theme trắng và plugin lõi để làm websit
 
 ## Thành phần
 
-- `theme/pmedia-ai-blank`: theme trắng, không phụ thuộc page builder, render section từ dữ liệu động.
-- `plugin/pmedia-ai-core`: plugin quản lý Section Builder, Prompt Builder không cần API key, Site Generator theo sitemap, SEO field, custom post type và renderer helper.
+- `theme/pmedia-ai-blank`: theme trắng, không phụ thuộc page builder, render section/component từ dữ liệu động.
+- `plugin/pmedia-ai-core`: plugin quản lý Section Builder, Nested Component Builder, Prompt Builder không cần API key, Site Generator theo sitemap, SEO field, custom post type và renderer helper.
 - `.github/workflows/build-zip.yml`: GitHub Actions tự lint PHP, build `.zip`, upload artifact và publish release asset khi tạo tag `v*`.
-
-## Cấu trúc
-
-```text
-.
-├── theme/
-│   └── pmedia-ai-blank/
-│       ├── style.css
-│       ├── functions.php
-│       ├── page.php
-│       ├── sections/
-│       └── assets/
-├── plugin/
-│   └── pmedia-ai-core/
-│       ├── pmedia-ai-core.php
-│       ├── includes/
-│       └── assets/
-└── .github/
-    └── workflows/
-        └── build-zip.yml
-```
 
 ## Cách dùng nhanh
 
@@ -46,8 +25,6 @@ Bộ khung WordPress nhẹ gồm theme trắng và plugin lõi để làm websit
 
 Prompt Builder phù hợp khi chưa muốn tích hợp OpenAI API trực tiếp vào WordPress.
 
-Quy trình:
-
 ```text
 PMEDIA AI > Prompt Builder
 → nhập brief/sitemap
@@ -58,7 +35,7 @@ PMEDIA AI > Prompt Builder
 → import thành nhiều Page
 ```
 
-Output AI nên có dạng:
+Plugin import được dạng:
 
 ```json
 {
@@ -68,11 +45,59 @@ Output AI nên có dạng:
       "title": "Trang chủ",
       "seo_title": "",
       "seo_description": "",
-      "sections": [
+      "sections": []
+    }
+  ]
+}
+```
+
+## Component nâng cao
+
+Hỗ trợ các component cơ bản:
+
+- `hero`
+- `content`
+- `services`
+- `pricing`
+- `faq`
+- `cta`
+- `contact`
+
+Hỗ trợ các component tương tác nâng cao:
+
+- `modal`
+- `gallery`
+- `slider`
+- `tabs`
+- `accordion`
+- `portfolio`
+
+Các component nâng cao được render bằng template PHP riêng trong theme và chạy bằng `interactive.js`. Không cần để AI sinh CSS/JS tùy ý.
+
+## Nested component
+
+Có thể lồng component bằng `children`.
+
+Ví dụ modal chứa gallery:
+
+```json
+{
+  "type": "modal",
+  "id": "project-gallery-modal",
+  "button_text": "Xem thư viện ảnh",
+  "modal_title": "Hình ảnh dự án",
+  "modal_size": "large",
+  "children": [
+    {
+      "type": "gallery",
+      "variant": "grid",
+      "lightbox": true,
+      "title": "Thư viện ảnh",
+      "items": [
         {
-          "type": "hero",
-          "title": "",
-          "description": ""
+          "image": "/wp-content/uploads/anh-1.jpg",
+          "title": "Ảnh 1",
+          "description": "Mô tả ảnh 1"
         }
       ]
     }
@@ -80,14 +105,68 @@ Output AI nên có dạng:
 }
 ```
 
-Plugin sẽ:
+Ví dụ portfolio item mở modal chi tiết, trong modal có slider + content:
 
-- Import JSON dạng `{ "pages": [...] }` hoặc array page trực tiếp.
-- Tạo/cập nhật Page theo `path`.
-- Tạo parent/child page theo đường dẫn lồng nhau.
-- Lưu `sections` vào `_pmedia_sections`.
-- Lưu SEO title/description nếu có.
-- Có thể đặt trang `/` làm homepage.
+```json
+{
+  "type": "portfolio",
+  "variant": "filterable_grid",
+  "title": "Dự án đã triển khai",
+  "filters": ["Tất cả", "Website", "Mini App", "Phần mềm"],
+  "items": [
+    {
+      "title": "Website phòng khám",
+      "category": "Website",
+      "image": "/wp-content/uploads/clinic-cover.jpg",
+      "description": "Website giới thiệu dịch vụ phòng khám.",
+      "modal": {
+        "title": "Chi tiết website phòng khám",
+        "children": [
+          {
+            "type": "slider",
+            "variant": "cards",
+            "items": [
+              {
+                "image": "/wp-content/uploads/clinic-1.jpg",
+                "title": "Trang chủ",
+                "description": "Giao diện trang chủ"
+              }
+            ]
+          },
+          {
+            "type": "content",
+            "title": "Mô tả dự án",
+            "content": "<p>Dự án tối ưu mobile, SEO và quản trị nội dung.</p>"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+## Quy tắc nested nên dùng
+
+- `modal.children`: có thể chứa `gallery`, `slider`, `content`, `cta`, `tabs`, `accordion`.
+- `tabs.items[].children`: có thể chứa `content`, `gallery`, `pricing`, `services`, `cta`.
+- `accordion.items[].children`: có thể chứa `content`, `gallery`, `contact`, `cta`.
+- `portfolio.items[].modal`: modal chi tiết riêng cho từng item.
+- Không để AI tự viết JavaScript hoặc CSS trong JSON.
+
+## Section Builder
+
+Trong từng Page/Post/Service/Project sẽ có meta box **PMEDIA AI Section Builder**.
+
+Có thể:
+
+- Thêm section/component.
+- Xóa component.
+- Nhân bản component.
+- Kéo thả đổi thứ tự.
+- Thêm/xóa item trong repeater như services, pricing, FAQ, gallery, slider, portfolio.
+- Chọn ảnh từ WordPress Media Library.
+- Mở tab JSON để copy/paste nội dung từ AI.
+- Dùng field JSON nâng cao như `children_json`, `modal_json` khi cần nested phức tạp.
 
 ## Site Generator
 
@@ -111,61 +190,6 @@ Hệ thống sẽ:
 - Lưu prompt nguồn vào meta.
 - Có thể đặt trang `/` làm homepage.
 - Có bảng quản lý các trang đã tạo bằng PMEDIA AI.
-
-## Section Builder
-
-Trong từng Page/Post/Service/Project sẽ có meta box **PMEDIA AI Section Builder**.
-
-Có thể:
-
-- Thêm section.
-- Xóa section.
-- Nhân bản section.
-- Kéo thả đổi thứ tự section.
-- Thêm/xóa item trong repeater như services, pricing, FAQ.
-- Chọn ảnh từ WordPress Media Library.
-- Mở tab JSON để copy/paste nội dung từ AI.
-
-## Section hỗ trợ
-
-- `hero`
-- `content`
-- `services`
-- `pricing`
-- `faq`
-- `cta`
-- `contact`
-
-## JSON mẫu section
-
-```json
-[
-  {
-    "type": "hero",
-    "eyebrow": "PMEDIA AI Website",
-    "title": "Website đẹp, nhẹ, dễ cập nhật nội dung",
-    "description": "WordPress giữ vai trò CMS và routing. Theme trắng render giao diện AI-generated.",
-    "button_text": "Tư vấn ngay",
-    "button_link": "/lien-he",
-    "secondary_button_text": "Xem dịch vụ",
-    "secondary_button_link": "/dich-vu"
-  },
-  {
-    "type": "services",
-    "title": "Dịch vụ chính",
-    "items": [
-      {
-        "title": "Thiết kế website",
-        "description": "Landing page, website công ty, website dịch vụ."
-      },
-      {
-        "title": "Mini CMS",
-        "description": "Quản trị nội dung gọn hơn WordPress truyền thống."
-      }
-    ]
-  }
-]
-```
 
 ## Nguyên tắc thiết kế
 
