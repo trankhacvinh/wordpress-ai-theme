@@ -45,6 +45,7 @@ final class PMEDIA_AI_Plugin
         wp_enqueue_style('pmedia-ai-core-admin', PMEDIA_AI_CORE_URL . 'assets/admin.css', [], PMEDIA_AI_CORE_VERSION);
         wp_enqueue_media();
         wp_enqueue_script('pmedia-ai-core-admin', PMEDIA_AI_CORE_URL . 'assets/admin.js', ['jquery', 'jquery-ui-sortable'], PMEDIA_AI_CORE_VERSION, true);
+        wp_enqueue_script('pmedia-ai-core-admin-tree', PMEDIA_AI_CORE_URL . 'assets/admin-tree.js', ['pmedia-ai-core-admin'], PMEDIA_AI_CORE_VERSION, true);
 
         if ($hook === 'pmedia-ai_page_pmedia-ai-prompt-builder') {
             wp_enqueue_script('pmedia-ai-core-prompt-builder', PMEDIA_AI_CORE_URL . 'assets/prompt-builder.js', [], PMEDIA_AI_CORE_VERSION, true);
@@ -77,7 +78,7 @@ final class PMEDIA_AI_Plugin
         <div class="wrap pmedia-ai-admin-page">
             <h1>PMEDIA AI Core</h1>
             <p class="description">
-                Plugin này giữ dữ liệu động cho website: Section Builder, Nested Component Builder, Prompt Builder không cần API key, Site Generator, custom post type, SEO field và renderer helper.
+                Plugin này giữ dữ liệu động cho website: Section Builder, Tree Builder, Prompt Builder không cần API key, Site Generator, custom post type, SEO field và renderer helper.
                 Theme chỉ cần lo giao diện.
             </p>
 
@@ -87,8 +88,8 @@ final class PMEDIA_AI_Plugin
                     <ol>
                         <li>Không có API key: vào <strong>PMEDIA AI > Prompt Builder</strong>, copy prompt, dán kết quả JSON để import.</li>
                         <li>Cần tạo nhanh theo rule: vào <strong>PMEDIA AI > Site Generator</strong>.</li>
-                        <li>Vào từng Page để chỉnh section bằng form builder.</li>
-                        <li>Với cấu trúc phức tạp, dùng JSON nâng cao có <code>children</code>, <code>modal</code>, gallery/slider/tabs/accordion/portfolio.</li>
+                        <li>Vào từng Page để chỉnh section bằng form builder hoặc Tree Builder.</li>
+                        <li>Với cấu trúc phức tạp, dùng <code>children</code>, <code>modal</code>, gallery/slider/tabs/accordion/portfolio.</li>
                     </ol>
                     <p>
                         <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=pmedia-ai-prompt-builder')); ?>">Mở Prompt Builder</a>
