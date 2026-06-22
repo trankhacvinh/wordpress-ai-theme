@@ -1,0 +1,63 @@
+name: Build WordPress ZIP Packages
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+    tags:
+      - 'v*'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build theme and plugin zip
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: none
+
+      - name: PHP syntax check
+        shell: bash
+        run: |
+          set -euo pipefail
+          find theme plugin -name '*.php' -print0 | xargs -0 -n 1 php -l
+
+      - name: Build ZIP files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          mkdir -p dist
+
+          cd theme
+          zip -r ../dist/pmedia-ai-blank.zip pmedia-ai-blank \
+            -x '*/.DS_Store' '*/node_modules/*' '*/vendor/*' '*/.git/*'
+
+          cd ../plugin
+          zip -r ../dist/pmedia-ai-core.zip pmedia-ai-core \
+            -x '*/.DS_Store' '*/node_modules/*' '*/vendor/*' '*/.git/*'
+
+          cd ..
+          ls -lh dist
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wordpress-ai-theme-packages
+          path: dist/*.zip
+          if-no-files-found: error
+
+      - name: Publish release assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
