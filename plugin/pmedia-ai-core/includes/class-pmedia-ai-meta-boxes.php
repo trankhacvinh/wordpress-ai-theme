@@ -36,7 +36,7 @@ final class PMEDIA_AI_Meta_Boxes
         ?>
         <div class="pmedia-ai-builder" data-builder="pmedia-ai-sections">
             <p class="description">
-                Quản lý layout bằng section/component. Hỗ trợ component nâng cao như modal, gallery, slider, tabs, accordion, portfolio. Với cấu trúc lồng nhau, dùng tab JSON hoặc các field JSON nâng cao.
+                Quản lý layout bằng form, JSON hoặc Tree Builder. Tree Builder phù hợp cho modal/gallery/slider/tabs/accordion/portfolio lồng nhau.
             </p>
 
             <textarea name="pmedia_sections" class="pmedia-ai-sections-json" hidden><?php echo esc_textarea((string) $sections); ?></textarea>
@@ -50,10 +50,46 @@ final class PMEDIA_AI_Meta_Boxes
                 <button type="button" class="button button-primary pmedia-ai-add-section">Thêm section</button>
                 <button type="button" class="button pmedia-ai-expand-all">Mở tất cả</button>
                 <button type="button" class="button pmedia-ai-collapse-all">Thu gọn tất cả</button>
+                <button type="button" class="button pmedia-ai-toggle-tree">Tree Builder</button>
                 <button type="button" class="button pmedia-ai-toggle-json">Xem JSON</button>
             </div>
 
             <div class="pmedia-ai-builder-list" aria-live="polite"></div>
+
+            <div class="pmedia-ai-tree-panel" hidden>
+                <div class="pmedia-ai-tree-head">
+                    <div>
+                        <strong>Tree Builder</strong>
+                        <p class="description">Chọn node trong cây để sửa JSON riêng, thêm child, xóa, nhân bản hoặc di chuyển vị trí.</p>
+                    </div>
+                    <div class="pmedia-ai-tree-actions">
+                        <select class="pmedia-ai-tree-add-type">
+                            <?php foreach ($schema as $type => $config) : ?>
+                                <option value="<?php echo esc_attr((string) $type); ?>"><?php echo esc_html((string) ($config['label'] ?? $type)); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="button" class="button pmedia-ai-tree-add-root">Thêm root</button>
+                        <button type="button" class="button pmedia-ai-tree-add-child">Thêm child</button>
+                    </div>
+                </div>
+
+                <div class="pmedia-ai-tree-grid">
+                    <div class="pmedia-ai-tree-list" aria-live="polite"></div>
+                    <div class="pmedia-ai-tree-editor">
+                        <p><strong>Node đang chọn</strong></p>
+                        <input type="text" class="widefat pmedia-ai-tree-path" readonly placeholder="Chưa chọn node">
+                        <textarea rows="18" class="large-text code pmedia-ai-tree-node-json" placeholder="Chọn một node trong cây để chỉnh JSON riêng"></textarea>
+                        <p class="pmedia-ai-tree-node-actions">
+                            <button type="button" class="button button-primary pmedia-ai-tree-apply-node">Áp dụng node JSON</button>
+                            <button type="button" class="button pmedia-ai-tree-duplicate-node">Nhân bản node</button>
+                            <button type="button" class="button pmedia-ai-tree-move-up">Lên</button>
+                            <button type="button" class="button pmedia-ai-tree-move-down">Xuống</button>
+                            <button type="button" class="button pmedia-ai-tree-delete-node">Xóa node</button>
+                        </p>
+                        <p class="description">Mẹo: có thể tạo modal chứa gallery bằng cách chọn node modal rồi bấm “Thêm child” kiểu gallery.</p>
+                    </div>
+                </div>
+            </div>
 
             <div class="pmedia-ai-json-panel" hidden>
                 <p><strong>JSON section</strong></p>
@@ -88,19 +124,15 @@ final class PMEDIA_AI_Meta_Boxes
         if (!isset($_POST['pmedia_ai_meta_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['pmedia_ai_meta_nonce'])), 'pmedia_ai_save_meta')) {
             return;
         }
-
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
             return;
         }
-
         if (!current_user_can('edit_post', $post_id)) {
             return;
         }
 
         if (isset($_POST['pmedia_sections'])) {
-            $sections_raw = wp_unslash($_POST['pmedia_sections']);
-            $sections_raw = self::normalize_json_string($sections_raw);
-
+            $sections_raw = self::normalize_json_string(wp_unslash($_POST['pmedia_sections']));
             if ($sections_raw === '') {
                 delete_post_meta($post_id, '_pmedia_sections');
             } elseif (self::is_valid_json($sections_raw)) {
@@ -113,7 +145,6 @@ final class PMEDIA_AI_Meta_Boxes
         if (isset($_POST['pmedia_seo_title'])) {
             update_post_meta($post_id, '_pmedia_seo_title', sanitize_text_field(wp_unslash($_POST['pmedia_seo_title'])));
         }
-
         if (isset($_POST['pmedia_seo_description'])) {
             update_post_meta($post_id, '_pmedia_seo_description', sanitize_textarea_field(wp_unslash($_POST['pmedia_seo_description'])));
         }
@@ -155,14 +186,12 @@ final class PMEDIA_AI_Meta_Boxes
         if (!$notice || !is_array($notice)) {
             return;
         }
-
         delete_transient($prefix . get_current_user_id());
         $type = $notice['type'] ?? 'info';
         $message = $notice['message'] ?? '';
         if ($message === '') {
             return;
         }
-
         printf('<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr($type), esc_html($message));
     }
 }
