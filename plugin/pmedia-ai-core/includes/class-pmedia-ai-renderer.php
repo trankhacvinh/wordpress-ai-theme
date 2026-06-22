@@ -19,9 +19,7 @@ final class PMEDIA_AI_Renderer
             $atts = [];
         }
 
-        $atts = shortcode_atts([
-            'id' => get_the_ID(),
-        ], $atts, 'pmedia_sections');
+        $atts = shortcode_atts(['id' => get_the_ID()], $atts, 'pmedia_sections');
 
         ob_start();
         self::render_sections((int) $atts['id']);
@@ -33,7 +31,6 @@ final class PMEDIA_AI_Renderer
         if ($post_id <= 0) {
             $post_id = get_the_ID();
         }
-
         if (!$post_id) {
             return [];
         }
@@ -42,17 +39,12 @@ final class PMEDIA_AI_Renderer
         if (is_array($raw)) {
             return $raw;
         }
-
         if (!is_string($raw) || trim($raw) === '') {
             return [];
         }
 
         $decoded = json_decode($raw, true);
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
-            return [];
-        }
-
-        return $decoded;
+        return json_last_error() === JSON_ERROR_NONE && is_array($decoded) ? $decoded : [];
     }
 
     public static function has_sections(int $post_id = 0): bool
@@ -68,11 +60,9 @@ final class PMEDIA_AI_Renderer
     public static function render_components(array $components): void
     {
         foreach ($components as $component) {
-            if (!is_array($component)) {
-                continue;
+            if (is_array($component)) {
+                self::render_section($component);
             }
-
-            self::render_section($component);
         }
     }
 
@@ -98,11 +88,9 @@ final class PMEDIA_AI_Renderer
         if (array_key_exists($key, $section)) {
             return $section[$key];
         }
-
         if (isset($section['settings']) && is_array($section['settings']) && array_key_exists($key, $section['settings'])) {
             return $section['settings'][$key];
         }
-
         return $default;
     }
 
@@ -118,7 +106,10 @@ final class PMEDIA_AI_Renderer
         $variant = sanitize_key((string) self::get_value($section, 'variant', 'default'));
         $animation = sanitize_key((string) self::get_value($section, 'animation', 'none'));
         $bg = sanitize_key((string) self::get_value($section, 'background_effect', 'none'));
-        $component_id = sanitize_key((string) self::get_value($section, 'id', ''));
+        $component_id = sanitize_key((string) self::get_value($section, 'custom_id', self::get_value($section, 'id', '')));
+        $custom_class = (string) self::get_value($section, 'custom_class', '');
+        $style_vars = self::normalize_key_value(self::get_value($section, 'style_vars', []));
+        $data_attrs = self::normalize_key_value(self::get_value($section, 'data_attrs', []));
 
         $classes = array_filter([
             $base_class,
@@ -127,15 +118,61 @@ final class PMEDIA_AI_Renderer
             $bg !== '' && $bg !== 'none' ? 'pmedia-bg-' . $bg : '',
         ]);
 
-        $attrs = 'class="' . esc_attr(implode(' ', $classes)) . '" data-component="' . esc_attr($type) . '"';
+        foreach (preg_split('/\s+/', $custom_class) ?: [] as $class) {
+            $class = sanitize_html_class($class);
+            if ($class !== '') {
+                $classes[] = $class;
+            }
+        }
+
+        $attrs = 'class="' . esc_attr(implode(' ', array_unique($classes))) . '" data-component="' . esc_attr($type) . '"';
         if ($component_id !== '') {
             $attrs .= ' id="' . esc_attr($component_id) . '"';
         }
         if ($animation !== '' && $animation !== 'none') {
             $attrs .= ' data-animation="' . esc_attr($animation) . '"';
         }
+        foreach ($data_attrs as $key => $value) {
+            $key = sanitize_key((string) $key);
+            if ($key !== '') {
+                $attrs .= ' data-' . esc_attr($key) . '="' . esc_attr((string) $value) . '"';
+            }
+        }
+        if (!empty($style_vars)) {
+            $style = [];
+            foreach ($style_vars as $key => $value) {
+                $key = self::sanitize_css_var((string) $key);
+                if ($key !== '') {
+                    $style[] = $key . ':' . esc_attr((string) $value);
+                }
+            }
+            if (!empty($style)) {
+                $attrs .= ' style="' . esc_attr(implode(';', $style)) . '"';
+            }
+        }
 
         return $attrs;
+    }
+
+    private static function normalize_key_value($value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+        if (is_string($value) && trim($value) !== '') {
+            $decoded = json_decode($value, true);
+            return json_last_error() === JSON_ERROR_NONE && is_array($decoded) ? $decoded : [];
+        }
+        return [];
+    }
+
+    private static function sanitize_css_var(string $key): string
+    {
+        $key = trim($key);
+        if (strpos($key, '--') !== 0) {
+            return '';
+        }
+        return preg_match('/^--[a-zA-Z0-9_-]+$/', $key) ? $key : '';
     }
 
     public static function print_seo_meta(): void
@@ -143,13 +180,8 @@ final class PMEDIA_AI_Renderer
         if (!is_singular()) {
             return;
         }
-
         $post_id = get_queried_object_id();
-        if (!$post_id) {
-            return;
-        }
-
-        $description = get_post_meta($post_id, '_pmedia_seo_description', true);
+        $description = $post_id ? get_post_meta($post_id, '_pmedia_seo_description', true) : '';
         if ($description) {
             printf("\n<meta name=\"description\" content=\"%s\">\n", esc_attr((string) $description));
         }
@@ -160,211 +192,37 @@ final class PMEDIA_AI_Renderer
         if (!is_singular()) {
             return $title;
         }
-
         $post_id = get_queried_object_id();
-        if (!$post_id) {
-            return $title;
-        }
-
-        $seo_title = get_post_meta($post_id, '_pmedia_seo_title', true);
+        $seo_title = $post_id ? get_post_meta($post_id, '_pmedia_seo_title', true) : '';
         if ($seo_title) {
             $title['title'] = (string) $seo_title;
         }
-
         return $title;
     }
 
     private static function render_fallback_section(array $section, string $type): void
     {
         echo '<section ' . self::attrs($section, 'pmedia-section pmedia-section-' . sanitize_html_class($type)) . '><div class="pmedia-container">';
-
-        switch ($type) {
-            case 'hero':
-                self::render_hero($section);
-                break;
-            case 'services':
-                self::render_card_list($section, 'Dịch vụ');
-                break;
-            case 'pricing':
-                self::render_pricing($section);
-                break;
-            case 'faq':
-                self::render_faq($section);
-                break;
-            case 'cta':
-                self::render_cta($section);
-                break;
-            case 'contact':
-                self::render_contact($section);
-                break;
-            default:
-                self::render_content($section);
-                break;
-        }
-
+        self::render_content($section);
         echo '</div></section>';
     }
 
-    private static function render_hero(array $section): void
+    private static function render_content(array $section): void
     {
         if (self::get_value($section, 'eyebrow')) {
             echo '<p class="pmedia-eyebrow">' . esc_html((string) self::get_value($section, 'eyebrow')) . '</p>';
         }
         if (self::get_value($section, 'title')) {
-            echo '<h1>' . esc_html((string) self::get_value($section, 'title')) . '</h1>';
+            echo '<h2>' . esc_html((string) self::get_value($section, 'title')) . '</h2>';
         }
         if (self::get_value($section, 'description')) {
-            echo '<p class="pmedia-lead">' . esc_html((string) self::get_value($section, 'description')) . '</p>';
+            echo '<p class="pmedia-section-description">' . esc_html((string) self::get_value($section, 'description')) . '</p>';
         }
-        self::render_buttons($section);
-    }
-
-    private static function render_card_list(array $section, string $fallback_title): void
-    {
-        self::render_heading($section, $fallback_title);
-        $items = self::get_value($section, 'items', []);
-        if (!is_array($items) || empty($items)) {
-            return;
-        }
-
-        echo '<div class="pmedia-grid">';
-        foreach ($items as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-            echo '<article class="pmedia-card">';
-            if (!empty($item['title'])) {
-                echo '<h3>' . esc_html((string) $item['title']) . '</h3>';
-            }
-            if (!empty($item['description'])) {
-                echo '<p>' . esc_html((string) $item['description']) . '</p>';
-            }
-            echo '</article>';
-        }
-        echo '</div>';
-    }
-
-    private static function render_pricing(array $section): void
-    {
-        self::render_heading($section, 'Bảng giá');
-        $items = self::get_value($section, 'items', []);
-        if (!is_array($items) || empty($items)) {
-            return;
-        }
-
-        echo '<div class="pmedia-grid pmedia-pricing-grid">';
-        foreach ($items as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-            echo '<article class="pmedia-card pmedia-price-card">';
-            if (!empty($item['name'])) {
-                echo '<h3>' . esc_html((string) $item['name']) . '</h3>';
-            }
-            if (!empty($item['price'])) {
-                echo '<p class="pmedia-price">' . esc_html((string) $item['price']) . '</p>';
-            }
-            $features = $item['features'] ?? [];
-            if (is_array($features) && !empty($features)) {
-                echo '<ul>';
-                foreach ($features as $feature) {
-                    echo '<li>' . esc_html((string) $feature) . '</li>';
-                }
-                echo '</ul>';
-            }
-            echo '</article>';
-        }
-        echo '</div>';
-    }
-
-    private static function render_faq(array $section): void
-    {
-        self::render_heading($section, 'FAQ');
-        $items = self::get_value($section, 'items', []);
-        if (!is_array($items) || empty($items)) {
-            return;
-        }
-
-        echo '<div class="pmedia-faq-list">';
-        foreach ($items as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-            echo '<details class="pmedia-faq-item">';
-            echo '<summary>' . esc_html((string) ($item['question'] ?? 'Câu hỏi')) . '</summary>';
-            if (!empty($item['answer'])) {
-                echo '<p>' . esc_html((string) $item['answer']) . '</p>';
-            }
-            echo '</details>';
-        }
-        echo '</div>';
-    }
-
-    private static function render_cta(array $section): void
-    {
-        echo '<div class="pmedia-cta-box">';
-        self::render_heading($section, 'Liên hệ');
-        self::render_buttons($section);
-        echo '</div>';
-    }
-
-    private static function render_contact(array $section): void
-    {
-        self::render_heading($section, 'Liên hệ');
-        $items = ['phone' => 'Điện thoại', 'email' => 'Email', 'address' => 'Địa chỉ'];
-        echo '<div class="pmedia-contact-list">';
-        foreach ($items as $key => $label) {
-            $value = self::get_value($section, $key, '');
-            if (!$value) {
-                continue;
-            }
-            echo '<p><strong>' . esc_html($label) . ':</strong> ' . esc_html((string) $value) . '</p>';
-        }
-        echo '</div>';
-    }
-
-    private static function render_content(array $section): void
-    {
-        self::render_heading($section, 'Nội dung');
         $content = self::get_value($section, 'content', '');
         if ($content) {
             echo '<div class="pmedia-content">' . wp_kses_post((string) $content) . '</div>';
         }
         self::render_components(self::get_children($section));
-    }
-
-    private static function render_heading(array $section, string $fallback_title): void
-    {
-        if (self::get_value($section, 'eyebrow')) {
-            echo '<p class="pmedia-eyebrow">' . esc_html((string) self::get_value($section, 'eyebrow')) . '</p>';
-        }
-
-        echo '<h2>' . esc_html((string) self::get_value($section, 'title', $fallback_title)) . '</h2>';
-
-        if (self::get_value($section, 'description')) {
-            echo '<p class="pmedia-section-description">' . esc_html((string) self::get_value($section, 'description')) . '</p>';
-        }
-    }
-
-    private static function render_buttons(array $section): void
-    {
-        $primary_text = self::get_value($section, 'button_text', '');
-        $primary_link = self::get_value($section, 'button_link', '#');
-        $secondary_text = self::get_value($section, 'secondary_button_text', '');
-        $secondary_link = self::get_value($section, 'secondary_button_link', '#');
-
-        if (!$primary_text && !$secondary_text) {
-            return;
-        }
-
-        echo '<div class="pmedia-actions">';
-        if ($primary_text) {
-            echo '<a class="pmedia-btn pmedia-btn-primary" href="' . esc_url((string) $primary_link) . '">' . esc_html((string) $primary_text) . '</a>';
-        }
-        if ($secondary_text) {
-            echo '<a class="pmedia-btn pmedia-btn-secondary" href="' . esc_url((string) $secondary_link) . '">' . esc_html((string) $secondary_text) . '</a>';
-        }
-        echo '</div>';
     }
 }
 
