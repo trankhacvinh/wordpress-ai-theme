@@ -56,26 +56,13 @@ final class PMEDIA_AI_Plugin
             return;
         }
 
-        wp_enqueue_style(
-            'pmedia-ai-core-admin',
-            PMEDIA_AI_CORE_URL . 'assets/admin.css',
-            [],
-            PMEDIA_AI_CORE_VERSION
-        );
-
+        wp_enqueue_style('pmedia-ai-core-admin', PMEDIA_AI_CORE_URL . 'assets/admin.css', [], PMEDIA_AI_CORE_VERSION);
         wp_enqueue_media();
-
-        wp_enqueue_script(
-            'pmedia-ai-core-admin',
-            PMEDIA_AI_CORE_URL . 'assets/admin.js',
-            ['jquery', 'jquery-ui-sortable'],
-            PMEDIA_AI_CORE_VERSION,
-            true
-        );
+        wp_enqueue_script('pmedia-ai-core-admin', PMEDIA_AI_CORE_URL . 'assets/admin.js', ['jquery', 'jquery-ui-sortable'], PMEDIA_AI_CORE_VERSION, true);
 
         wp_localize_script('pmedia-ai-core-admin', 'PMEDIA_AI_BUILDER', [
-            'schema' => PMEDIA_AI_Section_Schema::schema(),
-            'defaults' => PMEDIA_AI_Section_Schema::defaults(),
+            'schema' => PMEDIA_AI_Component_Registry::schema(),
+            'defaults' => PMEDIA_AI_Component_Registry::defaults(),
             'i18n' => [
                 'addSection' => 'Thêm section',
                 'deleteSection' => 'Xóa section',
@@ -100,7 +87,7 @@ final class PMEDIA_AI_Plugin
         <div class="wrap pmedia-ai-admin-page">
             <h1>PMEDIA AI Core</h1>
             <p class="description">
-                Plugin này giữ dữ liệu động cho website: Section Builder, Prompt Builder không cần API key, Site Generator, custom post type, SEO field và renderer helper.
+                Plugin này giữ dữ liệu động cho website: Section Builder, Nested Component Builder, Prompt Builder không cần API key, Site Generator, custom post type, SEO field và renderer helper.
                 Theme chỉ cần lo giao diện.
             </p>
 
@@ -111,7 +98,7 @@ final class PMEDIA_AI_Plugin
                         <li>Không có API key: vào <strong>PMEDIA AI > Prompt Builder</strong>, copy prompt, dán kết quả JSON để import.</li>
                         <li>Cần tạo nhanh theo rule: vào <strong>PMEDIA AI > Site Generator</strong>.</li>
                         <li>Vào từng Page để chỉnh section bằng form builder.</li>
-                        <li>Theme <strong>PMEDIA AI Blank</strong> sẽ render theo dữ liệu section.</li>
+                        <li>Với cấu trúc phức tạp, dùng JSON nâng cao có <code>children</code>, <code>modal</code>, gallery/slider/tabs/accordion/portfolio.</li>
                     </ol>
                     <p>
                         <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=pmedia-ai-prompt-builder')); ?>">Mở Prompt Builder</a>
@@ -120,21 +107,17 @@ final class PMEDIA_AI_Plugin
                 </div>
 
                 <div class="pmedia-ai-card">
-                    <h2>Section đang hỗ trợ</h2>
+                    <h2>Component đang hỗ trợ</h2>
                     <ul>
-                        <li><code>hero</code></li>
-                        <li><code>content</code></li>
-                        <li><code>services</code></li>
-                        <li><code>pricing</code></li>
-                        <li><code>faq</code></li>
-                        <li><code>cta</code></li>
-                        <li><code>contact</code></li>
+                        <li><code>hero</code>, <code>content</code>, <code>services</code>, <code>pricing</code>, <code>faq</code>, <code>cta</code>, <code>contact</code></li>
+                        <li><code>modal</code>, <code>gallery</code>, <code>slider</code>, <code>tabs</code>, <code>accordion</code>, <code>portfolio</code></li>
+                        <li>Nested: <code>modal.children</code>, <code>tabs.items[].children</code>, <code>accordion.items[].children</code>, <code>portfolio.items[].modal</code></li>
                     </ul>
                 </div>
             </div>
 
             <div class="pmedia-ai-card pmedia-ai-card-wide">
-                <h2>JSON mẫu</h2>
+                <h2>JSON mẫu cơ bản</h2>
                 <textarea readonly rows="24" class="large-text code"><?php echo esc_textarea($sample); ?></textarea>
             </div>
         </div>
