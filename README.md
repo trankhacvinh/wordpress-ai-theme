@@ -5,7 +5,7 @@ Bộ khung WordPress nhẹ gồm theme trắng và plugin lõi để làm websit
 ## Thành phần
 
 - `theme/pmedia-ai-blank`: theme trắng, không phụ thuộc page builder, render section từ dữ liệu động.
-- `plugin/pmedia-ai-core`: plugin quản lý section JSON, SEO field, custom post type và renderer helper.
+- `plugin/pmedia-ai-core`: plugin quản lý Section Builder, Site Generator theo sitemap, SEO field, custom post type và renderer helper.
 - `.github/workflows/build-zip.yml`: GitHub Actions tự lint PHP, build `.zip`, upload artifact và publish release asset khi tạo tag `v*`.
 
 ## Cấu trúc
@@ -36,8 +36,47 @@ Bộ khung WordPress nhẹ gồm theme trắng và plugin lõi để làm websit
 3. Tải artifact `wordpress-ai-theme-packages`.
 4. Cài `pmedia-ai-core.zip` trong WordPress Admin > Plugins.
 5. Cài `pmedia-ai-blank.zip` trong WordPress Admin > Appearance > Themes.
-6. Tạo Page mới, dán JSON section vào meta box **PMEDIA AI Sections**.
-7. Publish page và dùng permalink WordPress như `/about`, `/dich-vu`, `/lien-he`.
+6. Vào **PMEDIA AI > Site Generator**.
+7. Nhập brief/prompt và sitemap.
+8. Bấm **Tạo / cập nhật website từ sitemap**.
+9. Vào từng Page để chỉnh nội dung bằng **PMEDIA AI Section Builder**.
+
+## Site Generator
+
+Site Generator cho phép tạo hàng loạt Page theo sitemap. Mỗi dòng là một trang:
+
+```text
+/ | Trang chủ
+/gioi-thieu | Giới thiệu
+/dich-vu | Dịch vụ
+/dich-vu/thiet-ke-website | Thiết kế website
+/bang-gia | Bảng giá
+/cau-hoi-thuong-gap | Câu hỏi thường gặp
+/lien-he | Liên hệ
+```
+
+Hệ thống sẽ:
+
+- Tạo Page theo slug/path.
+- Tạo parent/child page theo đường dẫn lồng nhau.
+- Sinh section JSON phù hợp theo loại trang.
+- Lưu prompt nguồn vào meta.
+- Có thể đặt trang `/` làm homepage.
+- Có bảng quản lý các trang đã tạo bằng PMEDIA AI.
+
+## Section Builder
+
+Trong từng Page/Post/Service/Project sẽ có meta box **PMEDIA AI Section Builder**.
+
+Có thể:
+
+- Thêm section.
+- Xóa section.
+- Nhân bản section.
+- Kéo thả đổi thứ tự section.
+- Thêm/xóa item trong repeater như services, pricing, FAQ.
+- Chọn ảnh từ WordPress Media Library.
+- Mở tab JSON để copy/paste nội dung từ AI.
 
 ## Section hỗ trợ
 
