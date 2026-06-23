@@ -25,6 +25,7 @@ final class PMEDIA_AI_Plugin
         PMEDIA_AI_Site_Generator::hooks();
         PMEDIA_AI_Prompt_Workflow::hooks();
         PMEDIA_AI_Global_Settings::hooks();
+        PMEDIA_AI_Design_Settings::hooks();
         PMEDIA_AI_Custom_Code::hooks();
 
         add_action('admin_menu', [$this, 'register_admin_page']);
@@ -38,7 +39,7 @@ final class PMEDIA_AI_Plugin
 
     public function enqueue_admin_assets(string $hook): void
     {
-        $allowed_hooks = ['toplevel_page_pmedia-ai-core', 'pmedia-ai_page_pmedia-ai-site-generator', 'pmedia-ai_page_pmedia-ai-prompt-builder', 'pmedia-ai_page_pmedia-ai-global-settings', 'pmedia-ai_page_pmedia-ai-custom-code', 'post.php', 'post-new.php'];
+        $allowed_hooks = ['toplevel_page_pmedia-ai-core', 'pmedia-ai_page_pmedia-ai-site-generator', 'pmedia-ai_page_pmedia-ai-prompt-builder', 'pmedia-ai_page_pmedia-ai-global-settings', 'pmedia-ai_page_pmedia-ai-design-settings', 'pmedia-ai_page_pmedia-ai-custom-code', 'post.php', 'post-new.php'];
 
         if (!in_array($hook, $allowed_hooks, true)) {
             return;
@@ -84,7 +85,7 @@ final class PMEDIA_AI_Plugin
         <div class="wrap pmedia-ai-admin-page">
             <h1>PMEDIA AI Core</h1>
             <p class="description">
-                Plugin này giữ dữ liệu động cho website: Global Settings, Custom Code, Section Builder, Tree Builder, Prompt Builder không cần API key, Site Generator, SEO field và renderer helper.
+                Plugin này giữ dữ liệu động cho website: Global Settings, Design Settings, Custom Code, Section Builder, Tree Builder, Prompt Builder không cần API key, Site Generator, SEO field và renderer helper.
                 Theme chỉ cần lo giao diện.
             </p>
 
@@ -93,12 +94,13 @@ final class PMEDIA_AI_Plugin
                     <h2>Quy trình dùng nhanh</h2>
                     <ol>
                         <li>Vào <strong>PMEDIA AI > Global Settings</strong> để chỉnh header, menu, footer và responsive.</li>
-                        <li>Vào <strong>PMEDIA AI > Custom Code</strong> để thêm CSS/JS dùng chung toàn site.</li>
-                        <li>Không có API key: vào <strong>PMEDIA AI > Prompt Builder</strong>, copy prompt, dán kết quả JSON để import.</li>
+                        <li>Vào <strong>PMEDIA AI > Design Settings</strong> để chỉnh font, màu sắc, typography và style tokens.</li>
+                        <li>Vào <strong>PMEDIA AI > Custom Code</strong> để thêm CSS/JS/plugin assets dùng chung toàn site.</li>
                         <li>Vào từng Page để chỉnh section bằng form builder, Tree Builder hoặc Page Custom Code.</li>
                     </ol>
                     <p>
                         <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=pmedia-ai-global-settings')); ?>">Mở Global Settings</a>
+                        <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=pmedia-ai-design-settings')); ?>">Mở Design Settings</a>
                         <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=pmedia-ai-custom-code')); ?>">Mở Custom Code</a>
                         <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=pmedia-ai-prompt-builder')); ?>">Mở Prompt Builder</a>
                         <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=pmedia-ai-site-generator')); ?>">Mở Site Generator</a>
@@ -109,10 +111,10 @@ final class PMEDIA_AI_Plugin
                     <h2>Module đang hỗ trợ</h2>
                     <ul>
                         <li>Global header/footer/mobile settings</li>
-                        <li>Global/Page custom CSS & JS</li>
+                        <li>Design settings: Google Fonts, typography, colors, spacing</li>
+                        <li>Global/Page custom CSS & JS + external assets</li>
                         <li>Section Builder + Tree Builder</li>
-                        <li>Prompt Builder + Site Generator</li>
-                        <li><code>modal</code>, <code>gallery</code>, <code>slider</code>, <code>tabs</code>, <code>accordion</code>, <code>portfolio</code></li>
+                        <li><code>media</code>, <code>video</code>, <code>iframe</code>, <code>html</code>, <code>shortcode</code>, <code>rich_text</code></li>
                     </ul>
                 </div>
             </div>

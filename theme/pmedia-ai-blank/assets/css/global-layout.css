@@ -117,6 +117,94 @@
     grid-template-columns: 1fr;
 }
 
+.pmedia-rich-text {
+    margin-inline: auto;
+}
+
+.pmedia-align-left {
+    margin-left: 0;
+    text-align: left;
+}
+
+.pmedia-align-center {
+    text-align: center;
+}
+
+.pmedia-align-right {
+    margin-right: 0;
+    text-align: right;
+}
+
+.pmedia-font-size-sm { font-size: 0.92rem; }
+.pmedia-font-size-md { font-size: 1rem; }
+.pmedia-font-size-lg { font-size: 1.15rem; }
+.pmedia-font-size-xl { font-size: 1.35rem; }
+.pmedia-font-size-2xl { font-size: clamp(1.5rem, 3vw, 2.25rem); }
+.pmedia-font-weight-400 { font-weight: 400; }
+.pmedia-font-weight-500 { font-weight: 500; }
+.pmedia-font-weight-600 { font-weight: 600; }
+.pmedia-font-weight-700 { font-weight: 700; }
+.pmedia-font-weight-800 { font-weight: 800; }
+.pmedia-text-transform-uppercase { text-transform: uppercase; }
+.pmedia-text-transform-capitalize { text-transform: capitalize; }
+
+.pmedia-media,
+.pmedia-video-wrap,
+.pmedia-iframe-wrap {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--pmedia-radius-lg, 24px);
+    background: #f3f4f6;
+}
+
+.pmedia-ratio-1\/1 { aspect-ratio: 1 / 1; }
+.pmedia-ratio-4\/3 { aspect-ratio: 4 / 3; }
+.pmedia-ratio-16\/9 { aspect-ratio: 16 / 9; }
+.pmedia-ratio-21\/9 { aspect-ratio: 21 / 9; }
+
+.pmedia-media-el,
+.pmedia-video,
+.pmedia-iframe-wrap iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.pmedia-object-cover .pmedia-media-el { object-fit: cover; }
+.pmedia-object-contain .pmedia-media-el { object-fit: contain; }
+.pmedia-object-fill .pmedia-media-el { object-fit: fill; }
+
+.pmedia-media figcaption {
+    padding: 10px 4px 0;
+    color: var(--pmedia-muted);
+    font-size: 0.95rem;
+}
+
+.pmedia-shortcode-card,
+.pmedia-shortcode-contained {
+    padding: 24px;
+    border: 1px solid var(--pmedia-border);
+    border-radius: var(--pmedia-radius-lg, 24px);
+    background: #fff;
+    box-shadow: var(--pmedia-shadow);
+}
+
+.pmedia-shortcode-contained {
+    max-width: 860px;
+    margin-inline: auto;
+}
+
+.pmedia-html-block > *:first-child,
+.pmedia-content > *:first-child {
+    margin-top: 0;
+}
+
+.pmedia-html-block > *:last-child,
+.pmedia-content > *:last-child {
+    margin-bottom: 0;
+}
+
 @media (max-width: 1024px) {
     .site-header-cta-desktop {
         display: none;

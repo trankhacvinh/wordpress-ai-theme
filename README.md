@@ -5,7 +5,7 @@ Bộ khung WordPress nhẹ gồm theme trắng và plugin lõi để làm websit
 ## Thành phần
 
 - `theme/pmedia-ai-blank`: theme trắng, không phụ thuộc page builder, render section/component từ dữ liệu động.
-- `plugin/pmedia-ai-core`: plugin quản lý Global Settings, Custom Code, Section Builder, Tree Builder, Prompt Builder không cần API key, Site Generator theo sitemap, SEO field, custom post type và renderer helper.
+- `plugin/pmedia-ai-core`: plugin quản lý Global Settings, Design Settings, Custom Code, Section Builder, Tree Builder, Prompt Builder không cần API key, Site Generator theo sitemap, SEO field, custom post type và renderer helper.
 - `.github/workflows/build-zip.yml`: GitHub Actions tự lint PHP, build `.zip`, upload artifact và publish release asset khi tạo tag `v*`.
 
 ## Cách dùng nhanh
@@ -16,10 +16,33 @@ Bộ khung WordPress nhẹ gồm theme trắng và plugin lõi để làm websit
 4. Cài `pmedia-ai-core.zip` trong WordPress Admin > Plugins.
 5. Cài `pmedia-ai-blank.zip` trong WordPress Admin > Appearance > Themes.
 6. Vào **PMEDIA AI > Global Settings** để chỉnh header/menu/footer/mobile.
-7. Vào **PMEDIA AI > Custom Code** nếu cần CSS/JS dùng chung toàn site.
-8. Không có API key: vào **PMEDIA AI > Prompt Builder**.
-9. Dán JSON kết quả vào ô import để tạo/cập nhật Page.
+7. Vào **PMEDIA AI > Design Settings** để chỉnh font, màu, typography, radius, spacing.
+8. Vào **PMEDIA AI > Custom Code** nếu cần CSS/JS hoặc external assets dùng chung toàn site.
+9. Không có API key: vào **PMEDIA AI > Prompt Builder**.
 10. Vào từng Page để chỉnh nội dung bằng **Section Builder**, **Tree Builder** hoặc **Page Custom Code**.
+
+## Design Settings
+
+Vào:
+
+```text
+PMEDIA AI > Design Settings
+```
+
+Có thể chỉnh:
+
+- Google Fonts CSS URL
+- Body font-family
+- Heading font-family
+- Base font size
+- Body/heading line-height
+- Heading letter-spacing
+- Primary/secondary/text/muted colors
+- Border radius
+- Button radius
+- Section spacing
+- Card shadow
+- Custom root CSS variables
 
 ## Custom Code
 
@@ -35,11 +58,14 @@ PMEDIA AI > Custom Code
 
 Có thể thêm:
 
+- External CSS URLs
+- External JS Head URLs
+- External JS Footer URLs
 - Global CSS
 - Global JS Head
 - Global JS Footer
 - Before Body HTML
-- Công tắc bật/tắt Global Custom Code
+- Công tắc bật/tắt Global Custom Code / External Assets
 
 ### 2. Page Custom Code
 
@@ -65,19 +91,25 @@ Mỗi component có thêm các field:
 - `style_vars`
 - `data_attrs`
 
-Ví dụ:
+## Media / Embed Components
+
+Builder hỗ trợ thêm:
+
+- `rich_text`: nội dung văn bản có style.
+- `media`: ảnh hoặc video đơn giản.
+- `video`: video upload/URL có poster, autoplay, muted, loop, controls.
+- `iframe`: nhúng frame ngoài bằng URL.
+- `html`: block HTML an toàn.
+- `shortcode`: nhúng shortcode của plugin WordPress.
+
+Ví dụ shortcode:
 
 ```json
 {
-  "type": "hero",
-  "custom_id": "home-hero",
-  "custom_class": "hero-premium hero-dark",
-  "style_vars": {
-    "--hero-height": "92vh"
-  },
-  "data_attrs": {
-    "tracking": "hero"
-  }
+  "type": "shortcode",
+  "title": "Form liên hệ",
+  "shortcode": "[plugin_shortcode id=123]",
+  "wrapper": "card"
 }
 ```
 
@@ -93,22 +125,6 @@ PMEDIA AI > Prompt Builder
 → import thành nhiều Page
 ```
 
-Plugin import được dạng:
-
-```json
-{
-  "pages": [
-    {
-      "path": "/",
-      "title": "Trang chủ",
-      "seo_title": "",
-      "seo_description": "",
-      "sections": []
-    }
-  ]
-}
-```
-
 ## Component nâng cao
 
 Component cơ bản:
@@ -121,7 +137,7 @@ Component cơ bản:
 - `cta`
 - `contact`
 
-Component tương tác nâng cao:
+Component tương tác/media nâng cao:
 
 - `modal`
 - `gallery`
@@ -129,8 +145,12 @@ Component tương tác nâng cao:
 - `tabs`
 - `accordion`
 - `portfolio`
-
-Các component nâng cao được render bằng template PHP riêng trong theme và chạy bằng `interactive.js`. Không cần để AI sinh CSS/JS tùy ý.
+- `rich_text`
+- `media`
+- `video`
+- `iframe`
+- `html`
+- `shortcode`
 
 ## Tree Builder UI
 
