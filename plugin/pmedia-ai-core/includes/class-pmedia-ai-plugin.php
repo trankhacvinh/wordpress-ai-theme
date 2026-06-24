@@ -19,6 +19,9 @@ final class PMEDIA_AI_Plugin
 
     private function __construct()
     {
+        add_action('admin_menu', [$this, 'register_admin_page'], 1);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
+
         PMEDIA_AI_CPT::hooks();
         PMEDIA_AI_Meta_Boxes::hooks();
         PMEDIA_AI_Renderer::hooks();
@@ -27,9 +30,6 @@ final class PMEDIA_AI_Plugin
         PMEDIA_AI_Global_Settings::hooks();
         PMEDIA_AI_Design_Settings::hooks();
         PMEDIA_AI_Custom_Code::hooks();
-
-        add_action('admin_menu', [$this, 'register_admin_page']);
-        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
     }
 
     public function register_admin_page(): void
